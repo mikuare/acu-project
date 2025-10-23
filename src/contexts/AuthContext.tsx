@@ -125,23 +125,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const resetPassword = async (email: string) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/admin/reset-password`,
+      const redirectUrl = `${window.location.origin}/admin/reset-password`;
+      console.log('🔐 Password reset attempt:', {
+        email,
+        redirectUrl,
+        origin: window.location.origin
       });
 
-      if (error) throw error;
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      });
 
+      console.log('🔐 Reset password response:', { data, error });
+
+      if (error) {
+        console.error('❌ Reset password error:', error);
+        throw error;
+      }
+
+      console.log('✅ Password reset email sent successfully');
       toast({
         title: "✅ Password Reset Email Sent",
-        description: "Check your email for the password reset link",
-        duration: 2000,
+        description: "Check your email (including spam folder) for the reset link",
+        duration: 3000,
       });
     } catch (error: any) {
+      console.error('❌ Password reset caught error:', error);
       toast({
         title: "❌ Password Reset Failed",
-        description: error.message,
+        description: error.message || "Please try again or contact support",
         variant: "destructive",
-        duration: 2000,
+        duration: 3000,
       });
       throw error;
     }
