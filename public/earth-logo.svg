@@ -1,0 +1,24 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="oceanGradient" cx="0.3" cy="0.5" r="0.7">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E5BBA;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Ocean background -->
+  <circle cx="16" cy="16" r="16" fill="url(#oceanGradient)"/>
+  
+  <!-- Landmasses -->
+  <!-- Africa -->
+  <path d="M16 4 C12 6, 10 8, 12 12 C14 16, 16 18, 18 16 C20 14, 20 10, 18 8 C17 6, 16 4 Z" fill="#2D5016"/>
+  
+  <!-- Europe -->
+  <path d="M16 2 C18 3, 20 4, 20 6 C19 7, 18 8, 16 7 C14 6, 15 4, 16 2 Z" fill="#2D5016"/>
+  
+  <!-- Asia -->
+  <path d="M20 6 C24 8, 26 10, 24 12 C22 14, 20 12, 18 10 C19 8, 20 6 Z" fill="#2D5016"/>
+  
+  <!-- South America (small portion) -->
+  <path d="M4 12 C6 10, 8 12, 8 14 C7 16, 5 15, 4 12 Z" fill="#2D5016"/>
+</svg>

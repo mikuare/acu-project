@@ -1,0 +1,52 @@
+========================================
+   GOOGLE MAPS NOT SHOWING - QUICK FIX
+========================================
+
+ISSUE: You can't see Google Maps because:
+1. Library not installed (PowerShell blocked npm)
+2. Missing API key
+
+QUICK FIX (2 minutes):
+========================================
+
+STEP 1: Install Google Maps Library
+------------------------------------
+Option A (EASIEST): 
+  → Double-click: install-dependencies.bat
+
+Option B: 
+  → Press Win+R, type: cmd
+  → cd "C:\Users\edujk\Desktop\project map\acu-project-map-123456-789"
+  → npm install @react-google-maps/api @types/google.maps
+
+STEP 2: Get API Key
+------------------------------------
+→ Go to: https://console.cloud.google.com/google/maps-apis
+→ Create project
+→ Enable "Maps JavaScript API" and "Places API"
+→ Create API Key
+→ Copy it (looks like: AIzaSyXXXXXXXXXXXXXXXXX)
+
+STEP 3: Create .env File
+------------------------------------
+→ In project root, create file named: .env
+→ Add this line (with YOUR key):
+
+VITE_GOOGLE_MAPS_API_KEY=AIzaSyXXXXXXXXXXXXXXXXX
+
+→ Save file
+
+STEP 4: Restart Server
+------------------------------------
+→ Stop server (Ctrl+C)
+→ Start again: npm run dev
+→ Open: http://localhost:8080/
+
+✅ DONE! Google Maps should now appear!
+
+========================================
+
+For detailed help, see: FIX_GOOGLE_MAPS.md
+
+========================================
+

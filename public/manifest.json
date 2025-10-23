@@ -1,0 +1,39 @@
+{
+  "name": "ACU Project Management System",
+  "short_name": "ACU Projects",
+  "description": "Track and manage projects across the Philippines",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e3a8a",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo earth.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo earth.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/earth-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": [
+    {
+      "src": "/logo earth.png",
+      "sizes": "540x720",
+      "type": "image/png"
+    }
+  ]
+}
+
