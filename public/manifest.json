@@ -1,7 +1,7 @@
 {
-  "name": "ACU Project Management System",
-  "short_name": "ACU Projects",
-  "description": "Track and manage projects across the Philippines",
+  "name": "QMAZ Project Map - QMAZ Holdings Inc.",
+  "short_name": "QMAZ Project Map",
+  "description": "Track and Manage Projects in Map",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1e3a8a",

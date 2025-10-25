@@ -1,0 +1,98 @@
+============================================
+SIMPLE BUILD INSTRUCTIONS
+============================================
+
+I created 2 new scripts to help you:
+
+============================================
+STEP 1: Check Your Setup
+============================================
+
+Double-click: CHECK-SETUP.bat
+
+This will verify:
+✓ Java is installed
+✓ Node.js is installed  
+✓ Keystore file exists
+✓ Configuration is correct
+✓ Android project ready
+
+If any [ERROR] shows, fix it first!
+
+============================================
+STEP 2: Build Your APK
+============================================
+
+Double-click: BUILD-APK-SIMPLE.bat
+
+This will:
+1. Check keystore exists
+2. Build web app
+3. Sync to Android
+4. Build signed APK
+5. Open folder with APK
+
+Wait 5-10 minutes.
+
+============================================
+WHAT TO TELL ME:
+============================================
+
+If VERIFY-AND-BUILD.bat didn't work, please tell me:
+
+1. What error message did you see?
+2. Did it show any text at all?
+3. Did a window open and close immediately?
+
+This helps me fix it for you!
+
+============================================
+TRY THESE IN ORDER:
+============================================
+
+1. Run: CHECK-SETUP.bat
+   - Shows if everything is ready
+   - Copy/paste the output to me if errors
+
+2. Run: BUILD-APK-SIMPLE.bat
+   - Simpler version that avoids PowerShell issues
+   - Should work even if VERIFY-AND-BUILD.bat didn't
+
+============================================
+LOCATION OF YOUR FILES:
+============================================
+
+Keystore should be at:
+C:\Users\edujk\Desktop\project map\acu-project-map-123456-789\android\keystores\release-key.jks
+
+APK will be created at:
+C:\Users\edujk\Desktop\project map\acu-project-map-123456-789\android\app\build\outputs\apk\release\app-release.apk
+
+============================================
+COMMON ISSUES:
+============================================
+
+Issue 1: Window opens and closes immediately
+Fix: Run CHECK-SETUP.bat to see what's wrong
+
+Issue 2: "npm is not recognized"
+Fix: PowerShell blocking - BUILD-APK-SIMPLE.bat should fix this
+
+Issue 3: "Keystore not found"
+Fix: Check if android\keystores\release-key.jks exists
+
+Issue 4: "Access denied" or "Permission denied"
+Fix: Right-click script, select "Run as administrator"
+
+============================================
+NEXT STEPS:
+============================================
+
+1. Run: CHECK-SETUP.bat
+
+2. Tell me what it shows (copy/paste the output)
+
+3. Then we'll fix any issues and build your APK!
+
+============================================
+

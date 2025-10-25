@@ -11,9 +11,10 @@ import ProjectDetailsModal from './ProjectDetailsModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useUserCredentials } from '@/contexts/UserCredentialsContext';
-
-// Mapbox API Token - Add this to your .env file as VITE_MAPBOX_TOKEN
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
+import { MAPBOX_TOKEN } from '@/config/mapbox';
+import { getCurrentLocation, requestLocationPermission } from '@/utils/permissions';
+import { Geolocation } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
 
 // Philippines center coordinates
 const PHILIPPINES_CENTER = {
@@ -163,11 +164,25 @@ const PhilippinesMapMapbox = () => {
 
   const isSecureContext = () => window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
-  const isInPhilippinesBounds = (lat: number, lng: number) => lat >= 4.5 && lat <= 21.5 && lng >= 116.5 && lng <= 126.5;
+  // More lenient bounds check - accounts for GPS inaccuracy and border areas
+  const isInPhilippinesBounds = (lat: number, lng: number) => {
+    // Philippines bounds with buffer for GPS inaccuracy
+    const MIN_LAT = 4.0;   // ~4.5 with buffer
+    const MAX_LAT = 22.0;  // ~21.5 with buffer
+    const MIN_LNG = 116.0; // ~116.5 with buffer
+    const MAX_LNG = 127.0; // ~126.5 with buffer
+    
+    return lat >= MIN_LAT && lat <= MAX_LAT && lng >= MIN_LNG && lng <= MAX_LNG;
+  };
 
-  const stopGeoWatch = () => {
+  const stopGeoWatch = async () => {
     if (geoWatchId.current !== null) {
-      navigator.geolocation.clearWatch(geoWatchId.current);
+      // Use Capacitor's clearWatch for native apps, navigator for web
+      if (Capacitor.isNativePlatform()) {
+        await Geolocation.clearWatch({ id: geoWatchId.current });
+      } else {
+        navigator.geolocation.clearWatch(geoWatchId.current);
+      }
       geoWatchId.current = null;
     }
     if (geoTimeoutTimer.current !== null) {
@@ -176,35 +191,41 @@ const PhilippinesMapMapbox = () => {
     }
   };
 
-  const finalizeLocation = (latitude: number, longitude: number) => {
-    if (!isInPhilippinesBounds(latitude, longitude)) {
+  const finalizeLocation = (latitude: number, longitude: number, skipBoundsCheck = false) => {
+    // Only check bounds if not explicitly skipped (we already checked in calling code)
+    if (!skipBoundsCheck && !isInPhilippinesBounds(latitude, longitude)) {
       toast({
         title: "⚠️ Location Outside Philippines",
         description: `Detected location (${latitude.toFixed(4)}, ${longitude.toFixed(4)}) is outside the Philippines.\n\nPlease:\n• Ensure your device location is accurate\n• Use "Pin on Map" to manually select a location\n• Use "Search Place" to find a specific location`,
         variant: "destructive",
-        duration: 2000,
+        duration: 3000,
       });
       return;
     }
 
+    console.log('✅ Finalizing location:', { latitude, longitude });
+
+    // Show success message
     toast({
       title: "✅ Location Confirmed",
-      description: `You can now fill in the project details.\nLocation: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+      description: `Ready to enter project details.\nLocation: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
       duration: 2000,
     });
 
+    // Update map view to show the location
     setViewState({
       longitude,
       latitude,
       zoom: 15,
     });
 
+    // Set marker and open project form
     setTempMarker({ longitude, latitude });
     setSelectedLocation({ lat: latitude, lng: longitude });
     setShowProjectForm(true);
   };
 
-  // Handle Enter Project - robust user location flow
+  // Handle Enter Project - robust user location flow with Capacitor support
   const handleEnterProject = async () => {
     // Check if user is authenticated
     if (!isUserAuthenticated) {
@@ -217,139 +238,174 @@ const PhilippinesMapMapbox = () => {
       return;
     }
 
-    if (!navigator.geolocation) {
-      toast({
-        title: "❌ Geolocation Not Supported",
-        description: "Your browser doesn't support location services. Please use a modern browser like Chrome, Firefox, or Safari.",
-        variant: "destructive",
-        duration: 2000,
-      });
-      return;
-    }
-
-    if (!isSecureContext()) {
-      toast({
-        title: "❌ Insecure Connection",
-        description: "Location services require HTTPS or localhost. Please access this app through a secure connection.",
-        variant: "destructive",
-        duration: 2000,
-      });
-      return;
-    }
-
-    try {
-      if ('permissions' in navigator && (navigator as any).permissions?.query) {
-        const status = await (navigator as any).permissions.query({ name: 'geolocation' as PermissionName });
-        if (status.state === 'denied') {
-          const iframeNote = isEmbeddedInIframe() 
-            ? "\n\nNote: This app is embedded in an iframe. The parent page must include allow=\"geolocation *\" attribute." 
-            : "";
-          toast({
-            title: "🚫 Location Access Blocked",
-            description: `You must enable location access to use this feature.\n\nSteps:\n1. Click the location icon (🔒) in your browser's address bar\n2. Allow location access for this site\n3. Reload the page and try again${iframeNote}`,
-            variant: "destructive",
-            duration: 2000,
-          });
-          return;
-        }
-      }
-    } catch {
-      // Ignore Permissions API issues
-    }
-
+    // Request location permission (works on both web and native)
     toast({
-      title: "📍 Requesting Your Location",
-      description: "Please click 'Allow' when your browser asks for location permission. Waiting for an accurate GPS fix...",
+      title: "📍 Requesting Location Permission",
+      description: Capacitor.isNativePlatform() 
+        ? "Please allow location access in the permission dialog..."
+        : "Please click 'Allow' when your browser asks for location permission...",
       duration: 2000,
     });
 
-    geoBestFix.current = null;
+    try {
+      // Request permission first
+      const hasPermission = await requestLocationPermission();
+      
+      if (!hasPermission) {
+        toast({
+          title: "🚫 Location Permission Denied",
+          description: Capacitor.isNativePlatform()
+            ? "You must enable location access in Settings > Apps > ACU Project Map > Permissions.\n\nAlternatively, use 'Pin on Map' or 'Search Place' to add a project without location access."
+            : "You must enable location access to use this feature.\n\nSteps:\n1. Click the location icon (🔒) in your browser's address bar\n2. Allow location access for this site\n3. Reload the page and try again\n\nAlternatively, use 'Pin on Map' or 'Search Place'.",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
 
-    const options: PositionOptions = {
-      enableHighAccuracy: true,
-      timeout: 20000,
-      maximumAge: 0,
-    };
+      toast({
+        title: "✅ Permission Granted",
+        description: "Getting your precise location...",
+        duration: 2000,
+      });
 
-    geoWatchId.current = navigator.geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
+      geoBestFix.current = null;
 
-        if (isInPhilippinesBounds(latitude, longitude)) {
-          if (!geoBestFix.current || accuracy < geoBestFix.current.accuracy) {
-            geoBestFix.current = { lat: latitude, lng: longitude, accuracy };
+      // Use Capacitor's watchPosition for both web and native
+      const watchId = await Geolocation.watchPosition(
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 0,
+        },
+        (position, error) => {
+          if (error) {
+            stopGeoWatch();
+            console.error('Geolocation error:', error);
+
+            let errorMessage = "Please enable location access to use this feature";
+            let errorTitle = "Location Access Error";
+
+            if (error.message.includes('denied') || error.message.includes('permission')) {
+              errorTitle = "🚫 Location Permission Denied";
+              errorMessage = Capacitor.isNativePlatform()
+                ? "Location access denied. Please enable it in Settings > Apps > ACU Project Map > Permissions.\n\nAlternatively, use 'Pin on Map' or 'Search Place'."
+                : "You must enable location access. Click the location icon (🔒) in your browser's address bar and allow location access.\n\nAlternatively, use 'Pin on Map' or 'Search Place'.";
+            } else if (error.message.includes('unavailable')) {
+              errorTitle = "📍 Location Unavailable";
+              errorMessage = "Your device could not determine your location.\n\nPlease:\n• Ensure GPS/location is enabled on your device\n• Move to an area with better GPS signal (outdoors)\n• Check device location settings\n\nOr use 'Pin on Map' or 'Search Place' instead.";
+            } else if (error.message.includes('timeout')) {
+              errorTitle = "⏱️ Location Request Timeout";
+              errorMessage = "Location request took too long.\n\nPlease:\n• Ensure you have good GPS signal\n• Try again in a moment\n• Or use 'Pin on Map' or 'Search Place' instead";
+            }
+
+            toast({
+              title: errorTitle,
+              description: errorMessage,
+              variant: "destructive",
+              duration: 3000,
+            });
+            return;
+          }
+
+          if (position) {
+            const { latitude, longitude, accuracy } = position.coords;
+
+            console.log('📍 GPS Update:', {
+              lat: latitude.toFixed(6),
+              lng: longitude.toFixed(6),
+              accuracy: accuracy ? Math.round(accuracy) + 'm' : 'unknown',
+              inBounds: isInPhilippinesBounds(latitude, longitude)
+            });
+
+            // Always save the best fix, even if outside strict bounds initially
+            // GPS can be inaccurate when first starting up
+            if (!geoBestFix.current || (accuracy && accuracy < geoBestFix.current.accuracy)) {
+              geoBestFix.current = { lat: latitude, lng: longitude, accuracy: accuracy || 999 };
+              
+              // Show progress toast
+              if (isInPhilippinesBounds(latitude, longitude)) {
+                console.log(`✓ Location improving: ±${Math.round(accuracy || 999)}m`);
+              }
+            }
+
+            // Accept good accuracy quickly (50m or better)
+            if (accuracy && accuracy <= 50 && isInPhilippinesBounds(latitude, longitude)) {
+              stopGeoWatch();
+              toast({
+                title: "✅ Precise Location Found!",
+                description: `Accuracy: ±${Math.round(accuracy)} meters (Excellent!)\nYou can now enter project details.`,
+                duration: 2000,
+              });
+              finalizeLocation(latitude, longitude, true); // Skip bounds check - already verified
+            }
+            // Accept reasonable accuracy (200m or better) after a few seconds
+            else if (accuracy && accuracy <= 200 && isInPhilippinesBounds(latitude, longitude)) {
+              // Don't immediately accept, but mark as acceptable
+              console.log('✓ Good location found, waiting for possible improvement...');
+            }
           }
         }
+      );
 
-        if (accuracy <= 150 && isInPhilippinesBounds(latitude, longitude)) {
+      geoWatchId.current = watchId;
+
+      // Give GPS more time - 30 seconds for accurate fix (mobile GPS can be slow)
+      geoTimeoutTimer.current = window.setTimeout(() => {
+        if (geoBestFix.current) {
+          const { lat, lng, accuracy } = geoBestFix.current;
+          
+          // Check if we got any reasonable location within bounds
+          if (isInPhilippinesBounds(lat, lng)) {
+            stopGeoWatch();
+            
+            if (accuracy <= 300) {
+              // Acceptable accuracy
+              toast({
+                title: "✅ Location Acquired",
+                description: `Accuracy: ±${Math.round(accuracy)} meters\n\nThis is sufficient for project entry. For better accuracy, try outdoors.`,
+                duration: 2000,
+              });
+              finalizeLocation(lat, lng, true); // Skip bounds check - already verified
+            } else {
+              // Lower accuracy but still usable
+              toast({
+                title: "📍 Using Approximate Location",
+                description: `Accuracy: ±${Math.round(accuracy)} meters\n\nLocation may not be precise. For better accuracy:\n• Move outdoors\n• Wait a moment and try again\n• Or use "Pin on Map" to select exact location`,
+                duration: 3000,
+              });
+              finalizeLocation(lat, lng, true); // Skip bounds check - already verified
+            }
+          } else {
+            // Location found but outside Philippines
+            stopGeoWatch();
+            toast({
+              title: "⚠️ Location Outside Philippines",
+              description: `Detected location: ${lat.toFixed(4)}, ${lng.toFixed(4)}\n\nThis appears to be outside the Philippines. If you are in the Philippines:\n• Wait for GPS to stabilize\n• Move outdoors for better signal\n• Or use "Pin on Map" to manually select location`,
+              variant: "destructive",
+              duration: 3000,
+            });
+          }
+        } else {
+          // No location at all
           stopGeoWatch();
           toast({
-            title: "✅ Precise Location Found!",
-            description: `Accuracy: ±${Math.round(accuracy)} meters\nYou can now enter project details.`,
-            duration: 2000,
+            title: "❌ Unable to Get Location",
+            description: "GPS could not determine your location.\n\nPlease:\n• Ensure Location/GPS is enabled in device settings\n• Allow location permission for this app\n• Move to an area with clear sky view (outdoors)\n• Or use 'Pin on Map' or 'Search Place' instead",
+            variant: "destructive",
+            duration: 3000,
           });
-          finalizeLocation(latitude, longitude);
         }
-      },
-      (error) => {
-        stopGeoWatch();
-        console.error('Geolocation error:', error);
-
-        let errorMessage = "Please enable location access to use this feature";
-        let errorTitle = "Location Access Error";
-
-        switch (error.code) {
-          case error.PERMISSION_DENIED: {
-            errorTitle = "🚫 Location Permission Denied";
-            const iframeNote = isEmbeddedInIframe() 
-              ? "\n\nNote: If this app is embedded, ensure the iframe includes allow=\"geolocation *\"." 
-              : "";
-            errorMessage = `You must enable location access to use the Enter Project feature.\n\nSteps to enable:\n1. Click the location/lock icon (🔒) in your browser's address bar\n2. Set location permission to "Allow"\n3. Reload the page and try again\n\nAlternatively, use "Pin on Map" or "Search Place" to add a project without location access.${iframeNote}`;
-            break;
-          }
-          case error.POSITION_UNAVAILABLE:
-            errorTitle = "📍 Location Unavailable";
-            errorMessage = "Your device could not determine your location.\n\nPlease:\n• Ensure GPS/location is enabled on your device\n• Move to an area with better GPS signal (outdoors)\n• Check device location settings\n\nOr use 'Pin on Map' or 'Search Place' instead.";
-            break;
-          case error.TIMEOUT:
-            errorTitle = "⏱️ Location Request Timeout";
-            errorMessage = "Location request took too long.\n\nPlease:\n• Ensure you have good GPS signal\n• Try again in a moment\n• Or use 'Pin on Map' or 'Search Place' instead";
-            break;
-          default:
-            errorTitle = "❌ Location Error";
-            errorMessage = "An unknown error occurred while getting your location.\n\nPlease try 'Pin on Map' or 'Search Place' instead.";
-        }
-
-        toast({
-          title: errorTitle,
-          description: errorMessage,
-          variant: "destructive",
-          duration: 2000,
-        });
-      },
-      options
-    );
-
-    geoTimeoutTimer.current = window.setTimeout(() => {
-      if (geoBestFix.current) {
-        const { lat, lng, accuracy } = geoBestFix.current;
-        stopGeoWatch();
-        toast({
-          title: "📍 Using Approximate Location",
-          description: `Accuracy: ±${Math.round(accuracy)} meters\n\nFor better accuracy, try again outdoors or use "Pin on Map" to select exact location.`,
-          duration: 2000,
-        });
-        finalizeLocation(lat, lng);
-      } else {
-        stopGeoWatch();
-        toast({
-          title: "❌ Unable to Get Location",
-          description: "No valid location detected within the Philippines.\n\nPlease:\n• Enable location access in your browser\n• Ensure GPS is enabled on your device\n• Or use 'Pin on Map' or 'Search Place' instead",
-          variant: "destructive",
-          duration: 2000,
-        });
-      }
-    }, 10000);
+      }, 30000); // Increased from 10s to 30s - GPS needs time!
+    } catch (error: any) {
+      console.error('Error requesting location:', error);
+      toast({
+        title: "❌ Location Error",
+        description: "Failed to request location permission. Please try 'Pin on Map' or 'Search Place' instead.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
   };
 
   // Handle Pin on Map mode
@@ -474,10 +530,10 @@ const PhilippinesMapMapbox = () => {
         <div className="text-center max-w-md">
           <h2 className="text-2xl font-bold text-red-600 mb-4">⚠️ Mapbox Token Missing</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-4">
-            Please add your Mapbox token to the <code className="bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded">.env</code> file:
+            Please add your Mapbox token to: <code className="bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded">src/config/mapbox.ts</code>
           </p>
           <pre className="bg-gray-200 dark:bg-gray-800 p-4 rounded text-left text-sm">
-            VITE_MAPBOX_TOKEN=your_token_here
+            export const MAPBOX_TOKEN = 'your_token_here';
           </pre>
           <p className="text-gray-600 dark:text-gray-400 mt-4 text-sm">
             Get your FREE token from: <a href="https://account.mapbox.com/auth/signup/" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">mapbox.com</a>

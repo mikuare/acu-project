@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserCredentials } from "@/contexts/UserCredentialsContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import UserLoginModal from "@/components/UserLoginModal";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +32,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary to-background">
+      {/* PWA Install Prompt - Shows for web/PWA users only */}
+      <PWAInstallPrompt />
+      
       {/* Header */}
       <header className="bg-card/80 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
         <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
@@ -47,11 +51,11 @@ const Index = () => {
                 <img src="/globe-icon.svg" alt="Globe" className="w-4 h-4 sm:w-6 sm:h-6" />
               </div>
               <div className="hidden sm:block min-w-0">
-                <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Project Management System</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground hidden md:block truncate">Track and manage projects across the Philippines</p>
+                <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">QMAZ HOLDINGS INC. PROJECT MAP</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground hidden md:block truncate">Track and Manage Projects in Map</p>
               </div>
               <div className="sm:hidden min-w-0 flex-1">
-                <h1 className="text-sm font-bold text-foreground truncate">ACU Projects</h1>
+                <h1 className="text-sm font-bold text-foreground truncate">QMAZ Project Map</h1>
               </div>
             </div>
             <div className="flex items-center gap-0.5 sm:gap-2">

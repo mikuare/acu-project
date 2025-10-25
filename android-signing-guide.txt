@@ -1,0 +1,116 @@
+═══════════════════════════════════════════════════════════
+  ANDROID RELEASE APK SIGNING CONFIGURATION
+═══════════════════════════════════════════════════════════
+
+BEFORE YOU CAN BUILD RELEASE APK IN ANDROID STUDIO:
+You need to configure signing in your build.gradle file.
+
+═══════════════════════════════════════════════════════════
+OPTION A: Build Without Signing (Easiest for Testing)
+═══════════════════════════════════════════════════════════
+
+In Android Studio:
+
+1. Click: Build → Build Bundle(s) / APK(s) → Build APK(s)
+2. Wait for build to complete
+3. Click "locate" link in the notification
+4. Your APK will be at: android\app\build\outputs\apk\release\app-release.apk
+
+⚠️ This APK is UNSIGNED - you can test it, but not upload to Play Store
+
+═══════════════════════════════════════════════════════════
+OPTION B: Build With Signing (For Play Store)
+═══════════════════════════════════════════════════════════
+
+STEP 1: Create Keystore (if you haven't already)
+-----------------------------------------------
+Run: 4-setup-keystore.bat
+
+This creates: android\keystores\release-key.jks
+
+
+STEP 2: Configure Signing in build.gradle
+-----------------------------------------------
+Open: android\app\build.gradle
+
+Find the "android {" section and add this BEFORE buildTypes:
+
+    signingConfigs {
+        release {
+            storeFile file('../keystores/release-key.jks')
+            storePassword 'YOUR_KEYSTORE_PASSWORD'
+            keyAlias 'acu-project-map-key'
+            keyPassword 'YOUR_KEY_PASSWORD'
+        }
+    }
+
+Then INSIDE buildTypes, find "release {" and add:
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release  // ← Add this line
+            minifyEnabled false
+            ...
+        }
+    }
+
+
+STEP 3: Build Signed APK
+-----------------------------------------------
+In Android Studio:
+
+1. Click: Build → Generate Signed Bundle / APK
+2. Select: APK
+3. Click: Next
+4. Choose existing key store: android\keystores\release-key.jks
+5. Enter your passwords
+6. Click: Next
+7. Select: release
+8. Click: Finish
+
+Your signed APK will be at:
+android\app\release\app-release.apk
+
+═══════════════════════════════════════════════════════════
+OPTION C: Use Command Line (From Scripts)
+═══════════════════════════════════════════════════════════
+
+Just run: QUICK-BUILD-RELEASE-APK.bat
+
+This handles everything automatically!
+
+═══════════════════════════════════════════════════════════
+WHERE IS MY APK?
+═══════════════════════════════════════════════════════════
+
+Unsigned APK (for testing):
+→ android\app\build\outputs\apk\release\app-release-unsigned.apk
+
+Signed APK (for Play Store):
+→ android\app\build\outputs\apk\release\app-release.apk
+
+Or if built through "Generate Signed Bundle":
+→ android\app\release\app-release.apk
+
+═══════════════════════════════════════════════════════════
+QUICK CHECKLIST
+═══════════════════════════════════════════════════════════
+
+For Testing (Unsigned):
+□ Build → Build APK(s)
+□ Wait for completion
+□ Click "locate" in notification
+□ Install on device
+
+For Play Store (Signed):
+□ Create keystore (4-setup-keystore.bat)
+□ Configure build.gradle with signing
+□ Build → Generate Signed Bundle / APK
+□ Upload to Play Console
+
+Or Just Use:
+□ Run QUICK-BUILD-RELEASE-APK.bat
+□ Done!
+
+═══════════════════════════════════════════════════════════
+
