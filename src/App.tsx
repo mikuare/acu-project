@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { UserCredentialsProvider } from "@/contexts/UserCredentialsContext";
+import { AppSettingsProvider } from "@/contexts/AppSettingsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UpdatePrompt from "@/components/UpdatePrompt";
 import { useUpdateCheck } from "@/hooks/useUpdateCheck";
@@ -53,7 +54,8 @@ const App = () => {
             <BrowserRouter>
             <AuthProvider>
               <UserCredentialsProvider>
-                <Routes>
+                <AppSettingsProvider>
+                  <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/admin/signin" element={<SignIn />} />
                 <Route path="/admin/signup" element={<SignUp />} />
@@ -77,7 +79,8 @@ const App = () => {
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
-                </Routes>
+                  </Routes>
+                </AppSettingsProvider>
               </UserCredentialsProvider>
             </AuthProvider>
           </BrowserRouter>

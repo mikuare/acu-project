@@ -1,12 +1,15 @@
 import PhilippinesMap from "@/components/PhilippinesMapMapbox";
-import { Navigation, Globe, Shield, LayoutDashboard, Menu, X, RefreshCw, User, UserCheck, LogOut } from "lucide-react";
+import { Navigation, Globe, Shield, LayoutDashboard, Menu, X, RefreshCw, User, UserCheck, LogOut, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserCredentials } from "@/contexts/UserCredentialsContext";
+import { useAppSettings } from "@/contexts/AppSettingsContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import UserLoginModal from "@/components/UserLoginModal";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,9 +23,15 @@ import { useState } from "react";
 const Index = () => {
   const { user } = useAuth();
   const { isUserAuthenticated, username, logout } = useUserCredentials();
+  const { isMapLocked, isLoading: isSettingsLoading } = useAppSettings();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showUserLogin, setShowUserLogin] = useState(false);
+
+  // Check if user has access to the map
+  // Admin users (user) always have access
+  // Regular users need to be authenticated if map is locked
+  const hasMapAccess = user || !isMapLocked || isUserAuthenticated;
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -201,7 +210,69 @@ const Index = () => {
           {/* Map Container */}
           <div className="bg-card rounded-lg p-2 sm:p-4 shadow-xl border border-border/50">
             <div className="h-[calc(100vh-140px)] sm:h-[calc(100vh-180px)] lg:h-[calc(100vh-200px)] min-h-[400px] sm:min-h-[500px]">
-              <PhilippinesMap />
+              {isSettingsLoading ? (
+                /* Loading state */
+                <div className="h-full flex items-center justify-center">
+                  <div className="text-center space-y-3">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-sm text-muted-foreground">Loading map...</p>
+                  </div>
+                </div>
+              ) : !hasMapAccess ? (
+                /* Map is locked and user is not authenticated */
+                <div className="h-full flex items-center justify-center p-4">
+                  <Card className="max-w-md w-full border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20">
+                    <CardHeader>
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="bg-amber-500/20 p-3 rounded-full">
+                          <Lock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">Map Access Restricted</CardTitle>
+                          <CardDescription className="text-xs mt-1">
+                            Authentication Required
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Alert className="border-amber-500/50">
+                        <Lock className="w-4 h-4 text-amber-600" />
+                        <AlertTitle className="text-sm font-medium">Login Required</AlertTitle>
+                        <AlertDescription className="text-xs">
+                          The map is currently restricted. Please login with your user credentials to view the map and its projects.
+                        </AlertDescription>
+                      </Alert>
+                      
+                      <div className="space-y-2">
+                        <Button 
+                          onClick={() => setShowUserLogin(true)}
+                          className="w-full"
+                          size="lg"
+                        >
+                          <User className="w-4 h-4 mr-2" />
+                          Login to View Map
+                        </Button>
+                        
+                        {!user && (
+                          <p className="text-xs text-center text-muted-foreground">
+                            Admin? <Link to="/admin/signin" className="text-primary hover:underline">Sign in here</Link>
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="pt-3 border-t">
+                        <p className="text-xs text-muted-foreground">
+                          💡 <strong>Don't have credentials?</strong> Contact your administrator to get access.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              ) : (
+                /* User has access - show the map */
+                <PhilippinesMap />
+              )}
             </div>
           </div>
         </div>

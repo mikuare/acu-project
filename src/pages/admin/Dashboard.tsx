@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, Edit, Trash2, MapPin, Loader2, Eye, Search, Image as ImageIcon, Menu, X, LayoutGrid, LayoutList, RefreshCw, UserCog } from 'lucide-react';
+import { LogOut, Edit, Trash2, MapPin, Loader2, Eye, Search, Image as ImageIcon, Menu, X, LayoutGrid, LayoutList, RefreshCw, UserCog, Shield } from 'lucide-react';
 import EditProjectModal from '@/components/EditProjectModal';
 import ViewProjectsModal from '@/components/ViewProjectsModal';
 import ManageUserCredentials from '@/components/ManageUserCredentials';
+import MapLockSettings from '@/components/MapLockSettings';
 import ThemeToggle from '@/components/ThemeToggle';
 import ImageViewerModal from '@/components/ImageViewerModal';
 import { format } from 'date-fns';
@@ -59,6 +60,7 @@ const Dashboard = () => {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showUserCredentialsModal, setShowUserCredentialsModal] = useState(false);
+  const [showMapLockModal, setShowMapLockModal] = useState(false);
 
   const loadProjects = async () => {
     setLoading(true);
@@ -258,6 +260,15 @@ const Dashboard = () => {
                 <UserCog className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>User Credentials</span>
               </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowMapLockModal(true)}
+                className="hidden lg:flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-7 sm:h-8"
+              >
+                <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Map Access</span>
+              </Button>
               <Link to="/">
                 <Button variant="outline" size="sm" className="h-7 w-7 sm:w-auto sm:h-8 p-0 sm:px-3 flex-shrink-0">
                   <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -307,6 +318,18 @@ const Dashboard = () => {
                 >
                   <UserCog className="w-4 h-4" />
                   Manage User Credentials
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    setShowMapLockModal(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full justify-start gap-2"
+                >
+                  <Shield className="w-4 h-4" />
+                  Map Access Settings
                 </Button>
                 <Link to="/" className="block">
                   <Button variant="outline" size="sm" className="w-full justify-start gap-2">
@@ -759,6 +782,12 @@ const Dashboard = () => {
       <ManageUserCredentials
         open={showUserCredentialsModal}
         onOpenChange={setShowUserCredentialsModal}
+      />
+
+      {/* Map Lock Settings Modal */}
+      <MapLockSettings
+        open={showMapLockModal}
+        onOpenChange={setShowMapLockModal}
       />
     </div>
   );
