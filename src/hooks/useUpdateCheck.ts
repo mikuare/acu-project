@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 
 // IMPORTANT: Update this every time you build a new APK!
 // This should match android/app/build.gradle -> versionCode
@@ -20,6 +21,18 @@ export function useUpdateCheck() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
 
   useEffect(() => {
+    // ONLY check for updates on native Android APK
+    // DO NOT check on web or PWA
+    const platform = Capacitor.getPlatform();
+    console.log(`🔍 Platform detected: ${platform}`);
+    
+    if (platform !== "android" && platform !== "ios") {
+      console.log("🌐 Web/PWA detected - update check disabled");
+      return;
+    }
+
+    console.log("📱 Native app detected - will check for updates");
+
     async function checkUpdate() {
       try {
         console.log("🔍 Checking for updates...");
