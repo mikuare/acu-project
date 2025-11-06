@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { UserCredentialsProvider } from "@/contexts/UserCredentialsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import UpdatePrompt from "@/components/UpdatePrompt";
+import { useUpdateCheck } from "@/hooks/useUpdateCheck";
+import { toast as sonnerToast } from "sonner";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SignIn from "./pages/admin/SignIn";
@@ -19,13 +23,34 @@ import TestEdit from "./pages/admin/TestEdit";
 const queryClient = new QueryClient();
 
 const App = () => {
+  const { updateInfo } = useUpdateCheck();
+
+  // Show Sonner toast when update is available (like your working system)
+  useEffect(() => {
+    if (updateInfo) {
+      console.log("✅ Update found! Showing toast and modal...");
+      sonnerToast(`🎉 New version ${updateInfo.latestVersion} available!`, {
+        description: updateInfo.changelog,
+        action: {
+          label: "View Details",
+          onClick: () => console.log("Toast action clicked"),
+        },
+        duration: 10000,
+      });
+    }
+  }, [updateInfo]);
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+    <>
+      {/* Update prompt OUTSIDE all providers - renders at root level with max z-index */}
+      {updateInfo && <UpdatePrompt updateInfo={updateInfo} />}
+      
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
             <AuthProvider>
               <UserCredentialsProvider>
                 <Routes>
@@ -59,6 +84,7 @@ const App = () => {
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
+    </>
   );
 };
 

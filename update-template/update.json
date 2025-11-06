@@ -1,0 +1,9 @@
+{
+  "latestVersion": "1.1.0",
+  "versionCode": 2,
+  "changelog": "✨ New Features:\n• Fixed GPS location accuracy\n• Improved update system\n• UI improvements\n\n🐛 Bug Fixes:\n• Resolved map loading issues\n• Fixed permission requests",
+  "apkUrl": "https://github.com/mikuare/qmaz-project-update/releases/download/v1.1.0/qmaz-project-map-v1.1.0.apk",
+  "releaseDate": "2025-10-28",
+  "isCritical": false
+}
+

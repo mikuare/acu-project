@@ -95,13 +95,13 @@ const TestEdit = () => {
     console.log('User role:', user?.role);
     console.log('Session exists:', !!session);
 
-    // Test direct query
-    try {
-      const { data, error } = await supabase.rpc('auth.uid');
-      console.log('auth.uid() result:', { data, error });
-    } catch (e) {
-      console.log('auth.uid() error:', e);
-    }
+    // Test current session
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    console.log('Current session:', { 
+      hasSession: !!sessionData.session, 
+      userId: sessionData.session?.user?.id,
+      error: sessionError 
+    });
 
     // Test table permissions
     const { data: selectTest, error: selectError } = await supabase

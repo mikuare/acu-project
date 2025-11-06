@@ -97,10 +97,10 @@ const PWAInstallPrompt = () => {
   return (
     <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top duration-300">
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-2xl p-4 max-w-md mx-4 relative">
-        {/* Close button */}
+        {/* Close button - More visible with background */}
         <button
           onClick={handleClose}
-          className="absolute top-2 right-2 text-white/80 hover:text-white transition-colors"
+          className="absolute -top-2 -right-2 bg-white text-blue-600 rounded-full p-1.5 shadow-lg hover:bg-gray-100 transition-all hover:scale-110 z-10"
           aria-label="Close"
         >
           <X className="w-5 h-5" />
@@ -113,8 +113,8 @@ const PWAInstallPrompt = () => {
           </div>
 
           {/* Content */}
-          <div className="flex-1 pr-6">
-            <h3 className="font-bold text-lg mb-1">
+          <div className="flex-1 pr-4">
+            <h3 className="font-bold text-lg mb-1 whitespace-nowrap">
               📱 Install QMAZ Project Map
             </h3>
             <p className="text-sm text-white/90 mb-3">

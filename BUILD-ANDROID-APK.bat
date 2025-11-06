@@ -1,4 +1,4 @@
-@echo off
+    @echo off
 title Android APK Build - ACU Project Map
 color 0A
 
