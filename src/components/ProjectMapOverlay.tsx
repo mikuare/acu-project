@@ -51,7 +51,7 @@ const ProjectMapOverlay = ({ project, onClose, onViewFullDetails, className }: P
     return (
         <div
             className={cn(
-                "absolute right-4 top-4 z-[1000] w-full max-w-sm animate-in slide-in-from-right duration-500 flex flex-col transition-all duration-300",
+                "absolute right-4 top-4 z-[1000] w-full max-w-sm animate-in slide-in-from-right duration-500 flex flex-col transition-all",
                 className
             )}
             style={{

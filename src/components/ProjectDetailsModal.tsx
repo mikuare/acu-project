@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import ImageViewerModal from "./ImageViewerModal";
 import ReportProjectModal from "./ReportProjectModal";
+import ShareProjectModal from "./ShareProjectModal";
 
 interface Project {
   id: string;
@@ -56,6 +57,7 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   if (!project) return null;
 
@@ -134,7 +136,11 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" className="bg-[#FF5722] hover:bg-[#E64A19] text-white gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-[#FF5722] hover:bg-[#E64A19] text-white gap-2"
+                      onClick={() => setShareModalOpen(true)}
+                    >
                       <Share2 className="w-4 h-4" /> Share
                     </Button>
                     <Button
@@ -416,6 +422,12 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
         open={reportModalOpen}
         onOpenChange={setReportModalOpen}
         project={project}
+      />
+
+      <ShareProjectModal
+        open={shareModalOpen}
+        onOpenChange={setShareModalOpen}
+        projectUrl="https://acu-project-map-dev.vercel.app/"
       />
     </>
   );
