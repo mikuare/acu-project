@@ -1,0 +1,354 @@
+============================================
+🎨 ICON KITCHEN - DETAILED STEP-BY-STEP
+============================================
+
+This is the EASIEST way to change your
+Android app icon to the earth logo!
+
+============================================
+STEP 1: GO TO ICON KITCHEN
+============================================
+
+1. Open your browser
+
+2. Go to: https://icon.kitchen/
+
+3. You'll see the icon generator page
+
+============================================
+STEP 2: UPLOAD YOUR EARTH LOGO
+============================================
+
+1. Look for the upload area (center of page)
+
+2. Click "Click to upload" or drag & drop
+
+3. Browse to your project folder:
+   C:\Users\edujk\Desktop\project map\acu-project-map-123456-789\public
+
+4. Select: logo earth.png
+
+5. Click "Open"
+
+6. The earth logo will appear in the preview
+
+============================================
+STEP 3: CONFIGURE ICON SETTINGS
+============================================
+
+On the left side, configure:
+
+Icon Type:
+----------
+✓ Select: "Android Launcher Icons"
+  (Should be default)
+
+Shape:
+------
+✓ Select: "Circle" or "Rounded Square"
+  (Circle looks modern)
+
+Background:
+-----------
+Option A: Transparent (recommended)
+Option B: #1e40af (blue color)
+
+✓ Select: Transparent
+
+Resize:
+-------
+✓ Keep at: 100%
+  (Adjust if earth logo looks too big/small)
+
+Trim:
+-----
+✓ Select: "Auto"
+  (Or adjust padding if needed)
+
+Padding:
+--------
+✓ Keep default
+  (Or add 5-10% if earth logo is too close to edge)
+
+============================================
+STEP 4: PREVIEW THE ICON
+============================================
+
+On the right side, you'll see previews:
+
+Check:
+------
+□ Icon looks clear and centered
+□ Earth logo is recognizable
+□ Colors look good
+□ Size is appropriate
+□ Works in different backgrounds
+
+If not good:
+------------
+→ Go back to Step 3
+→ Adjust Resize, Trim, or Padding
+→ Preview again
+
+============================================
+STEP 5: DOWNLOAD ICONS
+============================================
+
+1. Look for "Download" button (top right)
+
+2. Click "Download"
+
+3. A ZIP file will download:
+   "icon-kitchen-android-icons.zip"
+   (Or similar name)
+
+4. ZIP goes to your Downloads folder
+
+5. Wait for download to complete
+
+============================================
+STEP 6: EXTRACT THE ZIP FILE
+============================================
+
+1. Go to Downloads folder
+
+2. Find: icon-kitchen-android-icons.zip
+
+3. Right-click the ZIP
+
+4. Select: "Extract All..." or "Extract here"
+
+5. A new folder appears with these folders inside:
+   - mipmap-mdpi
+   - mipmap-hdpi
+   - mipmap-xhdpi
+   - mipmap-xxhdpi
+   - mipmap-xxxhdpi
+
+6. Open the extracted folder
+
+7. You should see these 5 mipmap folders
+
+============================================
+STEP 7: LOCATE YOUR PROJECT RES FOLDER
+============================================
+
+1. Open File Explorer
+
+2. Navigate to:
+   C:\Users\edujk\Desktop\project map\acu-project-map-123456-789\android\app\src\main\res
+
+3. You'll see existing mipmap folders:
+   - mipmap-anydpi-v26
+   - mipmap-hdpi
+   - mipmap-mdpi
+   - mipmap-xhdpi
+   - mipmap-xxhdpi
+   - mipmap-xxxhdpi
+
+4. Keep this window open
+
+============================================
+STEP 8: COPY NEW ICONS
+============================================
+
+1. Go back to extracted icon folder (Downloads)
+
+2. Select ALL 5 mipmap folders:
+   - Hold Ctrl
+   - Click each mipmap folder
+   - All 5 should be highlighted
+
+3. Right-click → Copy
+   (Or press Ctrl+C)
+
+4. Go to project res folder:
+   android\app\src\main\res
+
+5. Right-click → Paste
+   (Or press Ctrl+V)
+
+6. Windows will ask:
+   "Replace existing files?"
+
+7. Click: "Replace the files in the destination"
+   or "Yes to All"
+
+8. Files are now copied! ✓
+
+============================================
+STEP 9: VERIFY FILES COPIED
+============================================
+
+Check these folders in:
+android\app\src\main\res\
+
+mipmap-mdpi:
+------------
+□ ic_launcher.png (should be updated)
+□ ic_launcher_round.png
+
+mipmap-hdpi:
+------------
+□ ic_launcher.png
+□ ic_launcher_round.png
+
+mipmap-xhdpi:
+-------------
+□ ic_launcher.png
+□ ic_launcher_round.png
+
+mipmap-xxhdpi:
+--------------
+□ ic_launcher.png
+□ ic_launcher_round.png
+
+mipmap-xxxhdpi:
+---------------
+□ ic_launcher.png
+□ ic_launcher_round.png
+
+If all present: Ready to build! ✓
+
+============================================
+STEP 10: BUILD APK
+============================================
+
+1. Go back to your project root folder:
+   C:\Users\edujk\Desktop\project map\acu-project-map-123456-789
+
+2. Double-click: BUILD-COMPLETE-APK-ALL-FIXES.bat
+
+3. Wait 10-15 minutes for build
+
+4. APK will be created:
+   android\app\build\outputs\apk\release\app-release.apk
+
+============================================
+STEP 11: UNINSTALL OLD APP
+============================================
+
+On your Android device:
+
+1. Settings → Apps
+
+2. Find: QMAZ Project Map
+
+3. Tap on it
+
+4. Tap: "Uninstall"
+
+5. Confirm: "OK"
+
+6. Wait for uninstall to complete
+
+7. IMPORTANT: Restart your device!
+   (Power off and on)
+
+Why restart?
+------------
+Android caches app icons in the launcher.
+Restarting clears this cache.
+
+============================================
+STEP 12: INSTALL NEW APK
+============================================
+
+After restarting your device:
+
+1. Transfer app-release.apk to device
+   (USB, email, cloud, etc.)
+
+2. Tap the APK file
+
+3. Android may ask:
+   "Install from Unknown Sources?"
+   → Tap "Settings"
+   → Enable "Allow from this source"
+   → Go back
+
+4. Tap "Install"
+
+5. Wait for installation
+
+6. Tap "Open" or go to app drawer
+
+============================================
+STEP 13: VERIFY NEW ICON
+============================================
+
+Check app drawer:
+
+Expected:
+┌──────┐
+│  🌍  │  QMAZ Project Map
+└──────┘
+
+The earth logo should now be visible!
+
+Also check:
+-----------
+□ Home screen (add shortcut)
+□ Recent apps
+□ Settings > Apps list
+
+All should show earth logo! ✓
+
+============================================
+🎉 SUCCESS!
+============================================
+
+Your Android app now has:
+✓ Earth logo icon 🌍
+✓ QMAZ Project Map name
+✓ Consistent with web/PWA
+
+============================================
+❓ IF ICON STILL DOESN'T SHOW:
+============================================
+
+Try this:
+
+1. Uninstall app again
+
+2. Settings → Apps → Launcher
+   → Clear cache
+
+3. Restart device again
+
+4. Install APK again
+
+5. Sometimes takes 2-3 tries
+   (Android launcher cache is stubborn!)
+
+============================================
+ALTERNATIVE: DIFFERENT ICON GENERATOR
+============================================
+
+If icon.kitchen doesn't work, try:
+
+→ https://romannurik.github.io/AndroidAssetStudio/
+  (Google's official icon generator)
+
+→ https://appicon.co/
+  (Another good option)
+
+Same process:
+1. Upload logo earth.png
+2. Download icons
+3. Copy to res folder
+4. Rebuild APK
+
+============================================
+📧 NEED MORE HELP?
+============================================
+
+If still having issues:
+
+1. Check if mipmap folders have files
+2. Check file sizes (shouldn't be 0 bytes)
+3. Try different icon generator
+4. Or use Android Studio (Method 4)
+
+============================================
+

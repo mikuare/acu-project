@@ -1,0 +1,132 @@
+============================================
+✅ PWA INSTALL PROMPT UPDATED
+============================================
+
+CHANGE APPLIED:
+---------------
+
+PWA Install Prompt now shows:
+
+📱 Install QMAZ Project Map
+Install this app for quick access!
+
+BEFORE:
+-------
+Title: "📱 Install ACU Project Map"
+Text: "Install this app for quick access and offline support!"
+
+AFTER:
+------
+Title: "📱 Install QMAZ Project Map"
+Text: "Install this app for quick access!"
+
+Changes:
+✓ Updated to QMAZ branding
+✓ Removed "and offline support!"
+✓ Simplified message
+
+============================================
+FILE MODIFIED:
+============================================
+
+✓ src/components/PWAInstallPrompt.tsx
+  → Title: "Install QMAZ Project Map"
+  → Description: "Install this app for quick access!"
+
+============================================
+HOW IT LOOKS NOW:
+============================================
+
+┌────────────────────────────────────────────┐
+│  📱  📱 Install QMAZ Project Map      ✕   │
+│                                            │
+│  Install this app for quick access!        │
+│                                            │
+│  [📥 Install Now]                          │
+└────────────────────────────────────────────┘
+
+Position: Top center
+Duration: 5 seconds
+Shows: Every visit/refresh
+Platform: Web/PWA only
+
+============================================
+iOS VERSION:
+============================================
+
+For iOS Safari users, shows:
+
+┌────────────────────────────────────────────┐
+│  📱  📱 Install QMAZ Project Map      ✕   │
+│                                            │
+│  Add to your home screen for a better      │
+│  experience!                               │
+│                                            │
+│  [📥 How to Install]                       │
+│                                            │
+│  Tap Share → Add to Home Screen            │
+└────────────────────────────────────────────┘
+
+============================================
+TESTING:
+============================================
+
+Test the update:
+
+1. npm run dev
+
+2. Open: http://localhost:8080
+
+3. Wait 1 second
+
+4. Install prompt appears with:
+   ✓ Title: "Install QMAZ Project Map"
+   ✓ Text: "Install this app for quick access!"
+
+5. Refresh page → Shows again
+
+============================================
+DEPLOYMENT:
+============================================
+
+For Web/PWA:
+------------
+npm run build
+→ Deploy dist folder
+→ New prompt text goes live!
+
+For Android APK:
+----------------
+BUILD-COMPLETE-APK-ALL-FIXES.bat
+→ Native app doesn't show prompt (correct!)
+→ But web/PWA version has new text
+
+============================================
+COMPLETE REBRANDING CHECKLIST:
+============================================
+
+✅ Web header: "QMAZ HOLDINGS INC. PROJECT MAP"
+✅ Browser tab: "QMAZ Project Map - QMAZ Holdings Inc."
+✅ PWA name: "QMAZ Project Map"
+✅ Android app: "QMAZ Project Map"
+✅ Loading text: "Loading QMAZ Project Map..."
+✅ PWA prompt: "Install QMAZ Project Map"
+✅ Removed: "offline support" text
+✅ Icon: Earth logo (globe)
+
+ALL BRANDING UPDATED! 🎉
+
+============================================
+SUMMARY:
+============================================
+
+What changed: PWA install prompt text
+Before: "Install ACU Project Map"
+After: "Install QMAZ Project Map"
+Removed: "and offline support!"
+Status: ✅ Complete
+
+Ready to deploy! 🚀
+
+============================================
+

@@ -1,0 +1,99 @@
+============================================
+🗺️ FIX: MAP NOT SHOWING IN APK
+============================================
+
+PROBLEM:
+--------
+Your APK installs but shows:
+"Mapbox token is missing"
+
+SOLUTION:
+---------
+Add your FREE Mapbox token to the app
+and rebuild the APK.
+
+============================================
+✅ EASIEST WAY (3 STEPS):
+============================================
+
+STEP 1: Get Mapbox Token (5 minutes)
+-------------------------------------
+Double-click: OPEN-MAPBOX-SIGNUP.bat
+
+This will:
+→ Open mapbox.com signup page
+→ Sign up (FREE, no credit card!)
+→ Copy your "Default public token"
+
+Or manually go to:
+https://account.mapbox.com/auth/signup/
+
+STEP 2: Add Token to App (1 minute)
+------------------------------------
+Double-click: ADD-MAPBOX-TOKEN.bat
+
+This will:
+→ Open the config file
+→ Replace 'YOUR_MAPBOX_TOKEN_HERE' with your token
+→ Save (Ctrl+S) and close
+
+STEP 3: Rebuild APK (10 minutes)
+---------------------------------
+Double-click: REBUILD-WITH-MAPBOX.bat
+
+This will:
+→ Build web app with token
+→ Sync to Android
+→ Create signed APK
+→ Open folder with APK
+
+DONE! Install the new APK and map will work! 🎉
+
+============================================
+📋 QUICK CHECKLIST:
+============================================
+
+□ Get Mapbox token (use OPEN-MAPBOX-SIGNUP.bat)
+□ Add token to config (use ADD-MAPBOX-TOKEN.bat)
+□ Rebuild APK (use REBUILD-WITH-MAPBOX.bat)
+□ Install new APK on Android
+□ Test - map should show!
+
+============================================
+📂 HELPER FILES:
+============================================
+
+OPEN-MAPBOX-SIGNUP.bat
+  → Opens signup page in browser
+
+ADD-MAPBOX-TOKEN.bat
+  → Opens config file to add token
+
+REBUILD-WITH-MAPBOX.bat
+  → Rebuilds APK with token included
+
+MAPBOX-TOKEN-FIX-GUIDE.txt
+  → Detailed explanation and troubleshooting
+
+GET-MAPBOX-TOKEN.txt
+  → Step-by-step token guide
+
+============================================
+⚡ IF YOU HAVE QUESTIONS:
+============================================
+
+Read: MAPBOX-TOKEN-FIX-GUIDE.txt
+(Complete explanation of issue and fix)
+
+Or just follow the 3 steps above!
+
+============================================
+🎯 START NOW:
+============================================
+
+1. Double-click: OPEN-MAPBOX-SIGNUP.bat
+
+Then follow the prompts! 🚀
+
+============================================
+

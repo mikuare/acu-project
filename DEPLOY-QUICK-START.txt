@@ -1,0 +1,50 @@
+============================================
+ 🚀 DEPLOY WEB + PWA UPDATES
+============================================
+
+FASTEST WAY:
+------------
+1. Double-click: DEPLOY-WEB-PWA.bat
+2. Wait 1-3 minutes
+3. Visit: https://acu-project-map-dev.vercel.app/
+4. Clear browser cache (Ctrl+Shift+R)
+
+DONE! ✅
+
+============================================
+
+MANUAL COMMANDS (if batch file doesn't work):
+----------------------------------------------
+
+Step 1: Build
+   npm run build
+
+Step 2: Commit & Push
+   git add .
+   git commit -m "Update: QMAZ Project Map enhancements"
+   git push origin main
+
+(If error, try: git push origin master)
+
+============================================
+
+WHAT THIS DEPLOYS:
+------------------
+✅ Web Application
+✅ PWA (Progressive Web App)
+✅ GPS improvements
+✅ PWA install prompt
+✅ QMAZ rebranding
+
+❌ Native APK (NOT deployed - build separately)
+
+============================================
+
+LIVE SITE:
+----------
+https://acu-project-map-dev.vercel.app/
+
+Check deployment:
+https://vercel.com/dashboard
+
+============================================

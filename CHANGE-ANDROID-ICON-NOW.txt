@@ -1,0 +1,192 @@
+============================================
+🌍 CHANGE ANDROID ICON TO EARTH LOGO
+============================================
+
+GOAL:
+-----
+Change Android app icon from default to
+your earth logo (same as browser favicon).
+
+CURRENT LOGO:
+-------------
+Location: public/logo earth.png
+Status: ✓ Ready to use!
+
+============================================
+⚡ EASIEST WAY (ONE COMMAND):
+============================================
+
+Just run:
+
+    UPDATE-ANDROID-ICON.bat
+
+This will:
+1. Sync earth logo to Android
+2. Build APK with new icon
+3. Open folder with APK
+
+Time: 10-15 minutes
+
+Result: APK with earth logo icon! 🌍
+
+============================================
+📱 WHAT YOU'LL SEE:
+============================================
+
+After installing the APK:
+
+App Drawer:
+┌──────┐
+│  🌍  │  QMAZ Project Map
+└──────┘
+
+Home Screen:
+┌──────┐
+│  🌍  │  QMAZ Project Map
+└──────┘
+
+The earth logo replaces the default icon!
+
+============================================
+🔧 IF ICON DOESN'T CHANGE:
+============================================
+
+Android caches icons, so:
+
+1. Uninstall old app completely
+2. Restart your device
+3. Install new APK
+4. Icon should update! ✓
+
+============================================
+🛠️ MANUAL METHOD:
+============================================
+
+If you prefer manual steps:
+
+Step 1: Sync Icons
+------------------
+npx cap sync android
+
+Step 2: Build APK
+-----------------
+BUILD-COMPLETE-APK-ALL-FIXES.bat
+
+Step 3: Install
+---------------
+Transfer APK to device and install
+
+============================================
+🎨 ALTERNATIVE: ONLINE TOOL
+============================================
+
+If automatic doesn't work:
+
+1. Go to: https://icon.kitchen/
+
+2. Upload: public/logo earth.png
+
+3. Settings:
+   - Type: Android Launcher Icon
+   - Shape: Circle
+   - Background: Transparent or blue
+
+4. Download icon pack
+
+5. Extract to:
+   android/app/src/main/res/
+   (Replace mipmap folders)
+
+6. Rebuild:
+   BUILD-COMPLETE-APK-ALL-FIXES.bat
+
+============================================
+📂 ICON FILES LOCATION:
+============================================
+
+Your earth logo:
+----------------
+public/logo earth.png (current location)
+public/earth-logo.svg (vector version)
+
+Android icons (auto-generated):
+--------------------------------
+android/app/src/main/res/
+  ├── mipmap-mdpi/ic_launcher.png
+  ├── mipmap-hdpi/ic_launcher.png
+  ├── mipmap-xhdpi/ic_launcher.png
+  ├── mipmap-xxhdpi/ic_launcher.png
+  └── mipmap-xxxhdpi/ic_launcher.png
+
+5 different sizes for different screen densities
+
+============================================
+✅ VERIFICATION:
+============================================
+
+After installing APK, check:
+
+□ App drawer icon: Earth logo 🌍
+□ Home screen icon: Earth logo 🌍
+□ Recent apps icon: Earth logo 🌍
+□ Settings app list: Earth logo 🌍
+
+If all show earth logo: SUCCESS! ✓
+
+============================================
+💡 HOW IT WORKS:
+============================================
+
+Capacitor reads your PWA manifest:
+→ Finds icon: /logo earth.png
+→ Copies to Android mipmap folders
+→ Generates all required sizes
+→ APK includes earth logo!
+
+Your earth logo:
+- Browser favicon: ✓
+- PWA icon: ✓
+- Android icon: ✓ (after rebuild)
+
+Consistent branding! 🎉
+
+============================================
+🎯 QUICK START:
+============================================
+
+1. Double-click: UPDATE-ANDROID-ICON.bat
+
+2. Wait 10-15 minutes
+
+3. Install APK on device
+
+4. Check app drawer
+
+5. Earth logo should appear! 🌍
+
+============================================
+📖 MORE INFO:
+============================================
+
+Detailed guide:
+→ ANDROID-ICON-COMPLETE-GUIDE.md
+
+Quick reference:
+→ ANDROID-ICON-UPDATE-GUIDE.txt
+
+Build all-in-one:
+→ BUILD-COMPLETE-APK-ALL-FIXES.bat
+
+============================================
+🎉 READY TO UPDATE ICON:
+============================================
+
+Run: UPDATE-ANDROID-ICON.bat
+
+Your Android app will have the earth logo
+matching your browser favicon! 🌍
+
+Consistent QMAZ branding across all platforms!
+
+============================================
+

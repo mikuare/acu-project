@@ -1,0 +1,760 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 217 33% 17%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 217 33% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 217 33% 17%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 217 91% 60%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 173 80% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 217 33% 10%;
+    --foreground: 210 40% 98%;
+
+    --card: 217 33% 13%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 217 33% 13%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 173 80% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Custom Scrollbar Utility - Forces visibility even on mobile */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #9ca3af transparent;
+    /* gray-400 transparent */
+    scrollbar-gutter: stable;
+    /* Ensures scrollbar is "beside" content */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    /* Standard width */
+    display: block !important;
+    /* Force display */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    /* Cleaner look */
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    /* gray-300 - lighter gray like image */
+    border-radius: 10px;
+    /* Fully rounded */
+    border: 2px solid transparent;
+    /* Padding around thumb */
+    background-clip: content-box;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #9ca3af;
+    /* gray-400 */
+  }
+}
+
+/* Custom cursor for pin mode */
+.map-pin-mode div {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%234299e1'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E") 12 24, crosshair !important;
+}
+
+/* Loading Screen Animation */
+#loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(173, 80%, 40%) 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.5s ease-out;
+}
+
+#loading-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader-container {
+  text-align: center;
+}
+
+.dot-loader {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 20px;
+}
+
+.dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  animation-duration: 2s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.dot:nth-child(1) {
+  animation-delay: 0s;
+  top: 50%;
+  left: 50%;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.1s;
+  top: 50%;
+  left: 50%;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.2s;
+  top: 50%;
+  left: 50%;
+}
+
+.dot:nth-child(4) {
+  animation-delay: 0.3s;
+  top: 50%;
+  left: 50%;
+}
+
+.dot:nth-child(5) {
+  animation-delay: 0.4s;
+  top: 50%;
+  left: 50%;
+}
+
+.dot:nth-child(6) {
+  animation-delay: 0.5s;
+  top: 50%;
+  left: 50%;
+}
+
+.dot:nth-child(7) {
+  animation-delay: 0.6s;
+  top: 50%;
+  left: 50%;
+}
+
+.dot:nth-child(8) {
+  animation-delay: 0.7s;
+  top: 50%;
+  left: 50%;
+}
+
+/* Individual dot animations forming a circle */
+.dot:nth-child(1) {
+  animation-name: dotToCircle1;
+}
+
+.dot:nth-child(2) {
+  animation-name: dotToCircle2;
+}
+
+.dot:nth-child(3) {
+  animation-name: dotToCircle3;
+}
+
+.dot:nth-child(4) {
+  animation-name: dotToCircle4;
+}
+
+.dot:nth-child(5) {
+  animation-name: dotToCircle5;
+}
+
+.dot:nth-child(6) {
+  animation-name: dotToCircle6;
+}
+
+.dot:nth-child(7) {
+  animation-name: dotToCircle7;
+}
+
+.dot:nth-child(8) {
+  animation-name: dotToCircle8;
+}
+
+@keyframes dotToCircle1 {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0);
+    opacity: 0;
+  }
+
+  10% {
+    transform: translate(-50%, -50%) translate(50px, 0px) scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translate(50px, 0px) scale(1.2);
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+}
+
+@keyframes dotToCircle2 {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0);
+    opacity: 0;
+  }
+
+  10% {
+    transform: translate(-50%, -50%) translate(35px, 35px) scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translate(35px, 35px) scale(1.2);
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+}
+
+@keyframes dotToCircle3 {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0);
+    opacity: 0;
+  }
+
+  10% {
+    transform: translate(-50%, -50%) translate(0px, 50px) scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translate(0px, 50px) scale(1.2);
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+}
+
+@keyframes dotToCircle4 {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0);
+    opacity: 0;
+  }
+
+  10% {
+    transform: translate(-50%, -50%) translate(-35px, 35px) scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translate(-35px, 35px) scale(1.2);
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+}
+
+@keyframes dotToCircle5 {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0);
+    opacity: 0;
+  }
+
+  10% {
+    transform: translate(-50%, -50%) translate(-50px, 0px) scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translate(-50px, 0px) scale(1.2);
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+}
+
+@keyframes dotToCircle6 {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0);
+    opacity: 0;
+  }
+
+  10% {
+    transform: translate(-50%, -50%) translate(-35px, -35px) scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translate(-35px, -35px) scale(1.2);
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+}
+
+@keyframes dotToCircle7 {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0);
+    opacity: 0;
+  }
+
+  10% {
+    transform: translate(-50%, -50%) translate(0px, -50px) scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translate(0px, -50px) scale(1.2);
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+}
+
+@keyframes dotToCircle8 {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0);
+    opacity: 0;
+  }
+
+  10% {
+    transform: translate(-50%, -50%) translate(35px, -35px) scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translate(35px, -35px) scale(1.2);
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+}
+
+.loading-text {
+  color: white;
+  font-size: 18px;
+  font-weight: 500;
+  opacity: 0.9;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Mobile Responsive Styles */
+
+/* Touch-friendly tap targets (minimum 44x44px for iOS, 48x48px for Android) */
+@layer base {
+
+  button,
+  a,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent text selection on double-tap */
+  * {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    -webkit-touch-callout: none;
+  }
+
+  /* Allow text selection in inputs and content areas */
+  input,
+  textarea,
+  [contenteditable],
+  p,
+  span {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* Smooth scrolling for mobile */
+  html {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Safe area insets for notched devices (iPhone X+) */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Mobile-first responsive breakpoints */
+@media (max-width: 640px) {
+
+  /* Small mobile devices */
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  /* Modal adjustments for mobile */
+  [role="dialog"],
+  .modal,
+  .dialog {
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+    margin: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translate(-50%, -50%) !important;
+  }
+
+  /* Card padding reduction on mobile */
+  .card {
+    padding: 1rem;
+  }
+
+  /* Button spacing for touch */
+  button+button {
+    margin-left: 0.5rem;
+  }
+
+  /* Form inputs full width on mobile */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    width: 100%;
+    font-size: 16px;
+    /* Prevents zoom on iOS */
+  }
+
+  /* Map container adjustments */
+  .gm-style {
+    touch-action: pan-x pan-y;
+  }
+
+  /* Stack elements vertically on mobile */
+  .flex-row-desktop {
+    flex-direction: column;
+  }
+
+  /* Loading screen mobile optimization */
+  #loading-screen .loading-text {
+    font-size: 16px;
+    padding: 0 1rem;
+    text-align: center;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+
+  /* Tablet portrait */
+  [role="dialog"],
+  .modal,
+  .dialog {
+    max-width: 90vw;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+
+  /* Tablet landscape */
+  [role="dialog"],
+  .modal,
+  .dialog {
+    max-width: 80vw;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 896px) and (orientation: landscape) {
+  body {
+    padding-top: 0;
+  }
+
+  #loading-screen .dot-loader {
+    width: 80px;
+    height: 80px;
+  }
+
+  #loading-screen .loading-text {
+    font-size: 14px;
+  }
+}
+
+/* Touch gesture improvements */
+.touch-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile navigation improvements */
+@media (max-width: 640px) {
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  /* Bottom navigation for mobile */
+  .mobile-nav-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: hsl(var(--background));
+    border-top: 1px solid hsl(var(--border));
+    padding: 0.75rem;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    z-index: 50;
+  }
+
+  /* Adjust main content for bottom nav */
+  .has-bottom-nav {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Improve touch feedback */
+button:active,
+[role="button"]:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* Prevent zoom on input focus (iOS) */
+@supports (-webkit-touch-callout: none) {
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Dark mode adjustments for mobile */
+@media (max-width: 640px) {
+  .dark {
+    /* Slightly lighter dark mode for better mobile visibility */
+    --background: 217 33% 12%;
+  }
+}
+
+/* Pull-to-refresh indicator area */
+@supports (overscroll-behavior: contain) {
+  body {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* Hide scrollbars on mobile for cleaner UI */
+@media (max-width: 640px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Floating action button for mobile */
+.fab {
+  position: fixed;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  right: 1rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 40;
+}
+
+@media (max-width: 640px) {
+  .fab {
+    bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Improve image viewing on mobile */
+@media (max-width: 640px) {
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Image viewer modal full screen on mobile */
+  .image-viewer-modal {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+}

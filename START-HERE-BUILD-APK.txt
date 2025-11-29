@@ -1,0 +1,177 @@
+============================================
+🚀 BUILD SIGNED APK FOR YOUR COLLEAGUES
+============================================
+
+YOUR GOAL:
+----------
+Create app-release.apk that colleagues can install
+on their Android phones without errors.
+
+YOUR SETUP (VERIFIED):
+----------------------
+✅ Java 17 installed
+✅ Android Studio installed
+✅ Capacitor 6 configured
+✅ Project ready to build
+
+============================================
+HOW TO BUILD (ONE COMMAND!):
+============================================
+
+Double-click this file:
+
+    📁 BUILD-SIGNED-RELEASE-APK.bat
+
+That's it!
+
+============================================
+WHAT HAPPENS:
+============================================
+
+1. Script checks Android SDK location ✓
+
+2. Creates signing key (first time only)
+   - You'll enter a password
+   - Save this password!
+   
+3. Builds signed release APK
+   - Takes 3-5 minutes
+   - Creates: app-release.apk
+
+4. Opens folder with your APK
+   - Ready to share!
+
+============================================
+FIRST TIME: CREATE SIGNING KEY
+============================================
+
+You'll be asked for:
+
+1. Keystore password (choose strong password!)
+2. Your name
+3. Organization (e.g., "ACU")
+4. City
+5. State/Province
+6. Country code (e.g., "PH")
+
+⚠️  WRITE DOWN THE PASSWORD!
+    You'll need it for every future build!
+
+⚠️  DON'T LOSE: acu-project-map.jks
+    This file signs your app!
+
+============================================
+SHARE WITH COLLEAGUES:
+============================================
+
+After build completes:
+
+1. Find: app-release.apk
+
+2. Share it:
+   - Email
+   - USB drive  
+   - Cloud storage
+   - Network share
+
+3. Colleagues install on Android phones
+
+4. Done! ✅
+
+============================================
+COLLEAGUES: HOW TO INSTALL
+============================================
+
+1. Transfer app-release.apk to phone
+
+2. Tap the APK file
+
+3. Enable "Unknown Sources" if asked
+
+4. Tap "Install"
+
+5. Tap "Open"
+
+6. Use the app!
+
+No errors! Properly signed! ✅
+
+============================================
+FUTURE UPDATES:
+============================================
+
+When you update the app:
+
+1. Make code changes
+
+2. Run: BUILD-SIGNED-RELEASE-APK.bat
+
+3. Enter SAME password as before
+
+4. Get new app-release.apk
+
+5. Share with colleagues
+
+They install over old version!
+
+============================================
+WHERE IS THE APK?
+============================================
+
+Full path:
+C:\Users\edujk\Desktop\project map\acu-project-map-123456-789\android\app\build\outputs\apk\release\app-release.apk
+
+The script opens this folder automatically!
+
+============================================
+APK FILE SIZE:
+============================================
+
+Typical size: 15-25 MB
+
+If it's tiny (few KB), something went wrong!
+
+============================================
+IMPORTANT FILES TO SAVE:
+============================================
+
+✓ acu-project-map.jks (signing key)
+✓ Your password (write it down!)
+✓ app-release.apk (the final APK)
+
+Backup acu-project-map.jks somewhere safe!
+
+============================================
+TROUBLESHOOTING:
+============================================
+
+If build fails:
+
+1. Open Android Studio
+
+2. File > Open > Select "android" folder
+
+3. Let it sync (download components)
+
+4. Run script again
+
+============================================
+READY TO BUILD?
+============================================
+
+Double-click:
+
+    BUILD-SIGNED-RELEASE-APK.bat
+
+Then share app-release.apk with your team!
+
+============================================
+VERIFICATION:
+============================================
+
+Test first:
+- Install app-release.apk on YOUR phone
+- If it works for you, it'll work for colleagues!
+
+============================================
+

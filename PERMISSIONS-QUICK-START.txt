@@ -1,0 +1,146 @@
+============================================
+📍 QUICK START: ADD PERMISSIONS TO APK
+============================================
+
+PROBLEM:
+--------
+APK doesn't request location or camera permissions.
+Users can't use GPS or camera features.
+
+SOLUTION:
+---------
+Build new APK with proper Android permissions!
+
+============================================
+✅ EASIEST WAY (ONE COMMAND):
+============================================
+
+Double-click:
+
+    BUILD-APK-WITH-PERMISSIONS.bat
+
+This does EVERYTHING:
+1. ✓ Installs permission packages
+2. ✓ Builds web app (with Mapbox)
+3. ✓ Syncs to Android (with permissions)
+4. ✓ Builds signed APK
+5. ✓ Opens folder with APK
+
+Time: 15-20 minutes
+
+============================================
+🎯 WHAT I CHANGED FOR YOU:
+============================================
+
+1. AndroidManifest.xml
+   → Added location, camera, storage permissions
+
+2. package.json
+   → Added @capacitor/geolocation
+   → Added @capacitor/camera
+
+3. src/utils/permissions.ts
+   → Created permission helper functions
+
+4. src/components/PhilippinesMapMapbox.tsx
+   → Updated to request permissions properly
+
+============================================
+📱 HOW IT WORKS NOW:
+============================================
+
+When colleagues install and use the APK:
+
+STEP 1: Open app
+→ App loads, map displays ✓
+
+STEP 2: Tap "Enter Project"
+→ Android permission dialog appears:
+  "Allow ACU Project Map to access location?"
+  [WHILE USING APP]  [ONLY THIS TIME]  [DENY]
+
+STEP 3: Tap "While using the app"
+→ Permission granted! ✓
+
+STEP 4: GPS location obtained
+→ User can enter project ✓
+
+STEP 5: Use camera (if needed)
+→ Camera permission dialog appears
+→ User taps "Allow"
+→ Camera works! ✓
+
+============================================
+🚀 BUILD NOW:
+============================================
+
+Just run:
+
+    BUILD-APK-WITH-PERMISSIONS.bat
+
+Wait 15-20 minutes.
+
+Get your APK with working permissions!
+
+============================================
+✅ WHAT'S INCLUDED:
+============================================
+
+The new APK will have:
+
+✓ Mapbox map (token included)
+✓ Location permission requests
+✓ Camera permission requests
+✓ Storage permission (for photos)
+✓ Properly signed (no parse errors)
+✓ All features working!
+
+============================================
+📋 TESTING:
+============================================
+
+After building:
+
+1. Install app-release.apk on Android
+2. Open the app
+3. Tap "Enter Project"
+4. ✓ Permission dialog should appear!
+5. Tap "Allow"
+6. ✓ GPS should work!
+
+============================================
+❓ QUICK HELP:
+============================================
+
+Permission dialog doesn't appear?
+→ May already be granted
+→ Check: Settings > Apps > ACU Project Map > Permissions
+
+Location not working?
+→ Enable device GPS/location
+→ Go outdoors for better signal
+→ Or use "Pin on Map" feature
+
+Camera not working?
+→ Check camera permission
+→ Make sure camera not open in background
+
+============================================
+📚 MORE INFO:
+============================================
+
+Read: PERMISSIONS-FIX-COMPLETE-GUIDE.md
+(Complete explanation with troubleshooting)
+
+============================================
+🎯 START NOW:
+============================================
+
+Double-click: BUILD-APK-WITH-PERMISSIONS.bat
+
+Then test on your Android device!
+
+That's it! 🎉
+
+============================================
+

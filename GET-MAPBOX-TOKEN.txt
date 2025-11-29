@@ -1,0 +1,75 @@
+============================================
+🗺️ HOW TO GET YOUR FREE MAPBOX TOKEN
+============================================
+
+STEP 1: Sign Up for Mapbox (FREE)
+----------------------------------
+1. Go to: https://account.mapbox.com/auth/signup/
+2. Fill in your email and create an account
+3. Verify your email
+4. Login to your account
+
+STEP 2: Get Your Token
+-----------------------
+1. After login, you'll see your "Default public token"
+2. It looks like: pk.eyJ1abc123xyz...
+3. Click the copy button to copy it
+
+STEP 3: Add Token to Your Project
+----------------------------------
+1. Open: src\config\mapbox.ts
+2. Find this line:
+   export const MAPBOX_TOKEN = 'YOUR_MAPBOX_TOKEN_HERE';
+3. Replace YOUR_MAPBOX_TOKEN_HERE with your token
+4. Save the file
+
+Example:
+--------
+export const MAPBOX_TOKEN = 'pk.eyJ1IjoibXl1c2VybmFtZSIsImEiOiJjbHh5ejEyMzQifQ.abc123xyz';
+
+STEP 4: Rebuild Your APK
+-------------------------
+After adding the token:
+
+1. Double-click: BUILD-APK-COMPLETE.bat
+2. Wait 5-10 minutes
+3. Get new signed APK with Mapbox working!
+
+============================================
+⚠️ IMPORTANT NOTES:
+============================================
+
+✓ Mapbox has a FREE tier (50,000 map loads/month)
+✓ Perfect for your project!
+✓ No credit card required for free tier
+✓ The token is PUBLIC (safe to include in app)
+
+✓ This is a PUBLIC token (starts with "pk.")
+✓ It's SAFE to include in your APK
+✓ It's meant to be used in client-side apps
+
+============================================
+❓ QUICK HELP:
+============================================
+
+Can't find the token after signup?
+→ Go to: https://account.mapbox.com/access-tokens/
+→ You'll see your "Default public token"
+→ Click "Copy" button
+
+Need help editing the file?
+→ Use Notepad, VSCode, or any text editor
+→ Or tell me your token and I'll help!
+
+============================================
+🚀 AFTER ADDING TOKEN:
+============================================
+
+Your app will:
+✓ Show the map on Android devices
+✓ Display all project markers
+✓ Allow zooming and panning
+✓ Work offline (cached tiles)
+
+============================================
+

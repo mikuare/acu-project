@@ -1,0 +1,301 @@
+============================================
+📱 ANDROID APP ICON UPDATE GUIDE
+============================================
+
+GOAL:
+-----
+Replace default Android icon with QMAZ earth logo
+
+CURRENT ICON:
+-------------
+Source: public/logo earth.png (earth/globe)
+Status: Ready to use!
+
+============================================
+METHOD 1: AUTOMATIC (EASIEST)
+============================================
+
+When you rebuild the APK, Capacitor will
+automatically sync your PWA icons to Android!
+
+Steps:
+------
+1. BUILD-COMPLETE-APK-ALL-FIXES.bat
+2. Wait for build to complete
+3. Install APK
+4. Check app icon → Should be earth logo! ✓
+
+Why it works:
+-------------
+- Capacitor reads public/manifest.json
+- Finds icon: /logo earth.png
+- Copies to Android mipmap folders
+- Generates all sizes automatically
+
+If icon doesn't update:
+-----------------------
+Run: npx cap sync android
+(Forces icon sync)
+
+============================================
+METHOD 2: ONLINE TOOL (EASY)
+============================================
+
+Use icon generator website:
+
+Steps:
+------
+1. Go to: https://icon.kitchen/
+
+2. Upload: public/logo earth.png
+
+3. Configure:
+   - Type: Launcher icon
+   - Shape: Circle (for modern Android)
+   - Background: Transparent or #1e40af (blue)
+
+4. Download icon pack
+
+5. Extract and copy to:
+   android/app/src/main/res/
+   (Replace existing mipmap folders)
+
+6. Rebuild APK
+
+============================================
+METHOD 3: ANDROID STUDIO
+============================================
+
+If you have Android Studio:
+
+Steps:
+------
+1. Open Android Studio
+
+2. File → Open
+   Select: android folder
+
+3. Right-click: res folder
+
+4. New → Image Asset
+
+5. Configure:
+   - Icon Type: Launcher Icons
+   - Asset Type: Image
+   - Path: Browse to public/logo earth.png
+   - Shape: Circle
+   - Background: Choose color or transparent
+
+6. Click Next → Finish
+
+7. Android Studio generates all sizes!
+
+8. Close Android Studio
+
+9. Rebuild APK
+
+============================================
+ANDROID ICON SIZES NEEDED:
+============================================
+
+Android requires multiple icon sizes:
+
+mipmap-mdpi/      → 48x48 px
+mipmap-hdpi/      → 72x72 px
+mipmap-xhdpi/     → 96x96 px
+mipmap-xxhdpi/    → 144x144 px
+mipmap-xxxhdpi/   → 192x192 px
+
+Files in each:
+- ic_launcher.png (regular icon)
+- ic_launcher_round.png (round icon)
+- ic_launcher_foreground.png (adaptive icon layer)
+
+============================================
+CURRENT ICON LOCATION:
+============================================
+
+Your earth logo:
+----------------
+public/logo earth.png
+public/earth-logo.svg
+
+Android icons:
+--------------
+android/app/src/main/res/
+  ├── mipmap-mdpi/
+  │   ├── ic_launcher.png
+  │   └── ic_launcher_round.png
+  ├── mipmap-hdpi/
+  │   ├── ic_launcher.png
+  │   └── ic_launcher_round.png
+  ├── mipmap-xhdpi/
+  │   ├── ic_launcher.png
+  │   └── ic_launcher_round.png
+  ├── mipmap-xxhdpi/
+  │   ├── ic_launcher.png
+  │   └── ic_launcher_round.png
+  └── mipmap-xxxhdpi/
+      ├── ic_launcher.png
+      └── ic_launcher_round.png
+
+============================================
+QUICK VERIFICATION:
+============================================
+
+After rebuilding APK:
+
+1. Install on Android device
+2. Go to app drawer
+3. Look for "QMAZ Project Map"
+4. Check icon:
+   ✓ Should show earth/globe
+   ✓ Should be circular
+   ✓ Should look clear
+
+If still default icon:
+----------------------
+- Uninstall app completely
+- Restart device
+- Reinstall APK
+- Check again
+
+============================================
+TROUBLESHOOTING:
+============================================
+
+Icon doesn't change:
+--------------------
+1. Clear app data:
+   Settings → Apps → QMAZ Project Map → Clear Data
+
+2. Uninstall completely:
+   Hold icon → Uninstall
+
+3. Restart device
+
+4. Install fresh APK
+
+5. Icon should update!
+
+Icon looks blurry:
+------------------
+- Use higher resolution source (512x512 or larger)
+- Use PNG format (not JPG)
+- Use icon generator for proper sizing
+
+Icon has white background:
+--------------------------
+- Use transparent PNG
+- Or set background color in icon generator
+- Regenerate icons
+
+============================================
+RECOMMENDED WORKFLOW:
+============================================
+
+Best Way:
+---------
+1. Use Method 1 (Automatic)
+   → npx cap sync android
+   → BUILD-COMPLETE-APK-ALL-FIXES.bat
+
+2. If doesn't work, use Method 2
+   → icon.kitchen website
+   → Upload earth logo
+   → Download and replace
+
+3. Rebuild:
+   → BUILD-COMPLETE-APK-ALL-FIXES.bat
+
+4. Test:
+   → Install on device
+   → Check app icon
+
+============================================
+ICON BEST PRACTICES:
+============================================
+
+Source Image:
+-------------
+✓ Resolution: 512x512 px or higher
+✓ Format: PNG with transparency
+✓ Colors: Clear, recognizable
+✓ Shape: Works in circle/square
+
+Android Icons:
+--------------
+✓ Transparent background (or solid color)
+✓ High contrast
+✓ Simple design (shows well when small)
+✓ Recognizable at all sizes
+
+Your Earth Logo:
+----------------
+✓ Perfect for app icon! (globe shape)
+✓ Clear and recognizable
+✓ Works in circle
+✓ Brand identity
+
+============================================
+AFTER ICON UPDATE:
+============================================
+
+What users see:
+---------------
+App Drawer:
+┌──────┐
+│  🌍  │ ← Earth logo
+│ QMAZ │
+│Project│
+└──────┘
+
+Home Screen (after install):
+┌──────┐
+│  🌍  │ ← Earth logo
+│ QMAZ │
+│  Map │
+└──────┘
+
+Recent Apps:
+┌────────────────┐
+│  🌍 QMAZ       │ ← Earth logo with name
+│  Project Map   │
+└────────────────┘
+
+============================================
+SUMMARY:
+============================================
+
+Goal: Use earth logo as Android app icon
+
+Methods:
+1. Automatic (npx cap sync) ⭐ EASIEST
+2. Online tool (icon.kitchen)
+3. Android Studio (if installed)
+
+Current icon: public/logo earth.png ✓
+Target: All Android mipmap folders
+
+Status: Ready to apply!
+
+Next step:
+→ Rebuild APK
+→ Icon will update automatically! ✓
+
+============================================
+QUICK COMMAND:
+============================================
+
+To rebuild with new icon:
+
+    BUILD-COMPLETE-APK-ALL-FIXES.bat
+
+This will:
+✓ Sync earth logo to Android
+✓ Build APK with QMAZ branding
+✓ Include earth logo as app icon
+✓ Ready to install!
+
+============================================
+

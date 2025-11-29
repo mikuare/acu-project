@@ -1,0 +1,144 @@
+============================================
+ WEB + PWA DEPLOYMENT COMMANDS
+============================================
+
+🚀 QUICK START:
+---------------
+Double-click: DEPLOY-WEB-PWA.bat
+
+OR run these commands manually in PowerShell/CMD:
+
+1️⃣ BUILD WEB APP
+   npm run build
+
+2️⃣ STAGE ALL CHANGES
+   git add .
+
+3️⃣ COMMIT CHANGES
+   git commit -m "Update: QMAZ Project Map - Web and PWA enhancements"
+
+4️⃣ PUSH TO GITHUB (triggers Vercel deployment)
+   git push origin main
+
+   (If error, try: git push origin master)
+
+============================================
+ WHAT GETS DEPLOYED
+============================================
+
+✅ Web Application
+✅ PWA (Progressive Web App)
+✅ All UI improvements
+✅ GPS location improvements
+✅ PWA install prompt
+✅ QMAZ rebranding
+✅ Updated icons and logos
+
+❌ Native Android APK (NOT deployed - must be built separately)
+
+============================================
+ AFTER DEPLOYMENT
+============================================
+
+1. Check deployment status:
+   https://vercel.com/dashboard
+
+2. Live site (usually ready in 1-3 minutes):
+   https://acu-project-map-dev.vercel.app/
+
+3. Clear browser cache to see changes immediately
+
+4. Test PWA install prompt:
+   - Visit site on mobile
+   - Should see install prompt after 1 second
+   - Auto-hides after 5 seconds
+
+5. Test GPS improvements:
+   - Open site on mobile with GPS enabled
+   - Click "Enter Project"
+   - Should detect location accurately
+
+============================================
+ TROUBLESHOOTING
+============================================
+
+❌ Build fails:
+   - Check for syntax errors in code
+   - Run: npm install
+   - Try again: npm run build
+
+❌ Git push fails:
+   - Check internet connection
+   - May need GitHub authentication
+   - Try: git push origin master (instead of main)
+
+❌ Vercel not deploying:
+   - Check Vercel dashboard
+   - Verify GitHub repository is connected
+   - May need to manually trigger deploy in Vercel
+
+❌ Changes not showing:
+   - Hard refresh: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)
+   - Clear browser cache
+   - Wait 1-3 minutes for deployment
+   - Check deployment status in Vercel
+
+❌ PWA install prompt not showing:
+   - Only works in browsers that support PWA
+   - Only shows if not already installed
+   - Won't show in native APK
+   - Check browser console for errors
+
+============================================
+ MANUAL DEPLOYMENT VIA VERCEL CLI (Optional)
+============================================
+
+If automatic GitHub deployment doesn't work:
+
+1. Install Vercel CLI:
+   npm i -g vercel
+
+2. Login to Vercel:
+   vercel login
+
+3. Deploy:
+   vercel --prod
+
+============================================
+ IMPORTANT NOTES
+============================================
+
+📌 GitHub Repository:
+   https://github.com/mikuare/acu-project.git
+
+📌 Live Site:
+   https://acu-project-map-dev.vercel.app/
+
+📌 Vercel Project:
+   Check your Vercel dashboard
+
+📌 Environment Variables:
+   - VITE_SUPABASE_URL (already set in Vercel)
+   - VITE_SUPABASE_ANON_KEY (already set in Vercel)
+   - VITE_MAPBOX_TOKEN (in code, not needed in Vercel)
+
+📌 Native APK:
+   - NOT affected by web deployment
+   - Must be rebuilt separately using:
+     BUILD-APK-WITH-PERMISSIONS.bat
+   - Must be distributed manually to users
+
+📌 Updates Included in This Deployment:
+   ✅ GPS location improvements (30s timeout, 300m accuracy)
+   ✅ PWA install prompt (5 seconds, QMAZ branding)
+   ✅ QMAZ Holdings Inc. rebranding
+   ✅ Updated app names and descriptions
+   ✅ Updated PWA manifest
+   ✅ Updated meta tags and SEO
+
+============================================
+
+Need help? Review the guides:
+- DEPLOYMENT_GUIDE.md
+- PWA-AND-GPS-IMPROVEMENTS.md
+- REBRANDING-COMPLETE.md
