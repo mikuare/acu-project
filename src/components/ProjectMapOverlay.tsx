@@ -49,8 +49,17 @@ const ProjectMapOverlay = ({ project, onClose, onViewFullDetails, className }: P
     const headerColor = branchColors[project.branch as keyof typeof branchColors] || "bg-primary";
 
     return (
-        <div className={cn("absolute right-4 top-4 z-[1000] w-full max-w-sm animate-in slide-in-from-right duration-500 max-h-[calc(100%-2rem)] flex flex-col", className)} style={{ height: '525px', maxHeight: 'calc(100vh - 250px)' }}>
-            <Card className="shadow-2xl border-0 overflow-hidden rounded-lg flex flex-col h-full max-h-full">
+        <div
+            className={cn(
+                "absolute right-4 top-4 z-[1000] w-full max-w-sm animate-in slide-in-from-right duration-500 flex flex-col transition-all duration-300",
+                className
+            )}
+            style={{
+                height: isMinimized ? 'auto' : '525px',
+                maxHeight: isMinimized ? '80px' : 'calc(100vh - 250px)'
+            }}
+        >
+            <Card className="shadow-2xl border-0 overflow-hidden rounded-lg flex flex-col h-full transition-all duration-300">
                 {/* Header Section - Always Visible */}
                 <div className={cn("p-4 text-white relative flex-shrink-0", headerColor)}>
                     {/* Close Button - Top Right */}
