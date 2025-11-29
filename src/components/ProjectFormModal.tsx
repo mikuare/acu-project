@@ -5,10 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Upload, X, Camera, FileText, MapPin, Loader2 } from "lucide-react";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -33,9 +30,10 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
   const [description, setDescription] = useState("");
 
   // Date States
-  const [effectivityDate, setEffectivityDate] = useState<Date | undefined>(undefined);
-  const [actualStartDate, setActualStartDate] = useState<Date | undefined>(undefined);
-  const [expiryDate, setExpiryDate] = useState<Date | undefined>(undefined);
+  // Date States
+  const [effectivityDate, setEffectivityDate] = useState("");
+  const [actualStartDate, setActualStartDate] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
 
   const [engineerName, setEngineerName] = useState("");
   const [userName, setUserName] = useState("");
@@ -362,13 +360,13 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
         contract_cost: contractCost ? parseFloat(contractCost) : null,
 
         // New Date Fields
-        effectivity_date: effectivityDate ? format(effectivityDate, 'yyyy-MM-dd') : null,
-        actual_start_date: actualStartDate ? format(actualStartDate, 'yyyy-MM-dd') : null,
-        expiry_date: expiryDate ? format(expiryDate, 'yyyy-MM-dd') : null,
+        effectivity_date: effectivityDate || null,
+        actual_start_date: actualStartDate || null,
+        expiry_date: expiryDate || null,
 
         // Fallback for legacy project_date (use actual start or today)
-        year: parseInt(format(actualStartDate || new Date(), 'yyyy')),
-        project_date: format(actualStartDate || new Date(), 'yyyy-MM-dd'),
+        year: parseInt(actualStartDate ? actualStartDate.substring(0, 4) : new Date().getFullYear().toString()),
+        project_date: actualStartDate || new Date().toISOString().split('T')[0],
 
         engineer_name: engineerName,
         user_name: userName,
@@ -393,9 +391,9 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
       // Reset form
       setProjectId("");
       setDescription("");
-      setEffectivityDate(undefined);
-      setActualStartDate(undefined);
-      setExpiryDate(undefined);
+      setEffectivityDate("");
+      setActualStartDate("");
+      setExpiryDate("");
       setEngineerName("");
       setUserName("");
       setContactPhone("");
@@ -480,81 +478,33 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
           {/* Date Pickers */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>Effectivity Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !effectivityDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {effectivityDate ? format(effectivityDate, "PPP") : <span>Pick date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={effectivityDate}
-                    onSelect={setEffectivityDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="effectivityDate">Effectivity Date</Label>
+              <Input
+                id="effectivityDate"
+                type="date"
+                value={effectivityDate}
+                onChange={(e) => setEffectivityDate(e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
-              <Label>Actual Start Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !actualStartDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {actualStartDate ? format(actualStartDate, "PPP") : <span>Pick date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={actualStartDate}
-                    onSelect={setActualStartDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="actualStartDate">Actual Start Date</Label>
+              <Input
+                id="actualStartDate"
+                type="date"
+                value={actualStartDate}
+                onChange={(e) => setActualStartDate(e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
-              <Label>Expiry Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !expiryDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {expiryDate ? format(expiryDate, "PPP") : <span>Pick date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={expiryDate}
-                    onSelect={setExpiryDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="expiryDate">Expiry Date</Label>
+              <Input
+                id="expiryDate"
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+              />
             </div>
           </div>
 

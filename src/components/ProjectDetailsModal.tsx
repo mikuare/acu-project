@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import ImageViewerModal from "./ImageViewerModal";
+import ReportProjectModal from "./ReportProjectModal";
 
 interface Project {
   id: string;
@@ -54,6 +55,7 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   if (!project) return null;
 
@@ -81,7 +83,7 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[95vw] sm:max-w-6xl max-h-[95vh] p-0 gap-0 overflow-hidden flex flex-col bg-white dark:bg-slate-900 [&>button]:hidden">
+        <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-6xl h-[90vh] p-0 gap-0 overflow-hidden flex flex-col bg-white dark:bg-slate-900 [&>button]:hidden">
           {/* Header */}
           <div className="bg-[#FF5722] px-6 py-4 flex items-center justify-between shrink-0">
             <DialogTitle className="text-white text-xl font-bold flex items-center gap-2">
@@ -135,7 +137,12 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
                     <Button size="sm" className="bg-[#FF5722] hover:bg-[#E64A19] text-white gap-2">
                       <Share2 className="w-4 h-4" /> Share
                     </Button>
-                    <Button size="sm" variant="outline" className="text-[#FF5722] border-[#FF5722] hover:bg-[#FF5722]/10 gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-[#FF5722] border-[#FF5722] hover:bg-[#FF5722]/10 gap-2"
+                      onClick={() => setReportModalOpen(true)}
+                    >
                       <Flag className="w-4 h-4" /> Report
                     </Button>
                   </div>
@@ -150,7 +157,7 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
                     className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF5722] data-[state=active]:text-[#FF5722] data-[state=active]:bg-transparent px-6 py-3 font-semibold uppercase text-xs sm:text-sm flex items-center gap-2"
                   >
                     <FileText className="w-4 h-4" />
-                    Contract Information
+                    Project Information
                   </TabsTrigger>
                   <TabsTrigger
                     value="location"
@@ -175,7 +182,7 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
                   </TabsTrigger>
                 </TabsList>
 
-                {/* Contract Information Tab */}
+                {/* Project Information Tab */}
                 <TabsContent value="contract" className="pt-6 space-y-6">
                   {/* Timeline */}
                   <Card className="border-0 shadow-sm">
@@ -403,6 +410,12 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
         onClose={() => setShowImageViewer(false)}
         images={imageUrls}
         initialIndex={selectedImageIndex}
+      />
+
+      <ReportProjectModal
+        open={reportModalOpen}
+        onOpenChange={setReportModalOpen}
+        project={project}
       />
     </>
   );
