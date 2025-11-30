@@ -68,7 +68,7 @@ interface PhilippinesMapMapboxProps {
 
 const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, onProjectSelect }: PhilippinesMapMapboxProps) => {
   const { isUserAuthenticated } = useUserCredentials();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const mapRef = useRef<any>(null);
   const tempMarkerRef = useRef<{ longitude: number; latitude: number } | null>(null);
   const geoWatchId = useRef<number | null>(null);
@@ -431,7 +431,9 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
     setTempMarker(null);
     setSelectedLocation(null);
     setShowProjectForm(false);
-    loadProjects();
+    if (onProjectUpdate) {
+      onProjectUpdate();
+    }
   };
 
   // Handle map click for pin mode
@@ -488,8 +490,15 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
         description: "Map centered on selected project location",
         duration: 2000,
       });
+
+      // Clear URL parameters to prevent re-triggering
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('lat');
+      newParams.delete('lng');
+      newParams.delete('project');
+      setSearchParams(newParams, { replace: true });
     }
-  }, [searchParams, projects]);
+  }, [searchParams, projects, setSearchParams]);
 
   if (!MAPBOX_TOKEN) {
     return (

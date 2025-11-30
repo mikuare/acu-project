@@ -11,6 +11,8 @@ import { format } from "date-fns";
 import { Eye, CheckCircle, XCircle, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
+import { useAuth } from "@/contexts/AuthContext";
+
 interface ProjectReport {
     id: string;
     project_id: string;
@@ -22,6 +24,7 @@ interface ProjectReport {
     proof_urls: string[] | null;
     status: 'pending' | 'catered' | 'cancelled';
     resolution_message: string | null;
+    resolved_by: string | null;
     created_at: string;
     projects?: {
         project_id: string;
@@ -30,6 +33,7 @@ interface ProjectReport {
 }
 
 const ReportList = () => {
+    const { user } = useAuth();
     const [reports, setReports] = useState<ProjectReport[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedReport, setSelectedReport] = useState<ProjectReport | null>(null);
@@ -70,12 +74,13 @@ const ReportList = () => {
         loadReports();
     }, []);
 
-    const handleStatusUpdate = async (id: string, newStatus: 'catered' | 'cancelled', message?: string) => {
+    const handleStatusUpdate = async (id: string, newStatus: 'catered' | 'cancelled', message?: string, resolvedBy?: string) => {
         setProcessingId(id);
         try {
             const updateData: any = { status: newStatus };
-            if (newStatus === 'catered' && message) {
-                updateData.resolution_message = message;
+            if (newStatus === 'catered') {
+                if (message) updateData.resolution_message = message;
+                if (resolvedBy) updateData.resolved_by = resolvedBy;
             }
 
             const { error } = await supabase
@@ -85,10 +90,20 @@ const ReportList = () => {
 
             if (error) throw error;
 
-            setReports(prev => prev.map(r => r.id === id ? { ...r, status: newStatus, resolution_message: message || r.resolution_message } : r));
+            setReports(prev => prev.map(r => r.id === id ? {
+                ...r,
+                status: newStatus,
+                resolution_message: message || r.resolution_message,
+                resolved_by: resolvedBy || r.resolved_by
+            } : r));
 
             if (selectedReport?.id === id) {
-                setSelectedReport(prev => prev ? { ...prev, status: newStatus, resolution_message: message || prev.resolution_message } : null);
+                setSelectedReport(prev => prev ? {
+                    ...prev,
+                    status: newStatus,
+                    resolution_message: message || prev.resolution_message,
+                    resolved_by: resolvedBy || prev.resolved_by
+                } : null);
             }
 
             toast({
@@ -116,8 +131,11 @@ const ReportList = () => {
             });
             return;
         }
+
+        const adminName = user?.user_metadata?.full_name || user?.email || 'Admin';
+
         if (selectedReport) {
-            handleStatusUpdate(selectedReport.id, 'catered', resolutionMessage);
+            handleStatusUpdate(selectedReport.id, 'catered', resolutionMessage, adminName);
             setResolutionDialogOpen(false);
             setResolutionMessage("");
         }
@@ -257,6 +275,11 @@ const ReportList = () => {
                                 <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg border border-green-200 dark:border-green-800">
                                     <p className="text-xs font-medium text-green-700 dark:text-green-300 mb-2">Resolution Message</p>
                                     <p className="text-sm text-green-900 dark:text-green-100 whitespace-pre-wrap">{selectedReport.resolution_message}</p>
+                                    {selectedReport.resolved_by && (
+                                        <p className="text-xs text-green-700 dark:text-green-300 mt-2 pt-2 border-t border-green-200 dark:border-green-800">
+                                            Resolved by: <span className="font-semibold">{selectedReport.resolved_by}</span>
+                                        </p>
+                                    )}
                                 </div>
                             )}
 

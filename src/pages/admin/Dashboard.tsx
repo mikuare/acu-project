@@ -243,7 +243,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary to-background">
       {/* Header */}
-      <header className="bg-card/80 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
+      <header className="bg-card/80 backdrop-blur-sm border-b-4 border-[#FF5722] sticky top-0 z-50 shadow-md">
         <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
@@ -254,9 +254,11 @@ const Dashboard = () => {
               >
                 {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
               </button>
-              <div className="bg-primary/10 p-1.5 rounded-lg flex-shrink-0">
-                <img src="/globe-icon.svg" alt="Globe" className="w-4 h-4 sm:w-6 sm:h-6" />
-              </div>
+              <img
+                src="/qmaz-logo.jpg"
+                alt="QMAZ Logo"
+                className="h-10 w-10 rounded-full object-cover shadow-sm"
+              />
               <div className="hidden sm:block min-w-0">
                 <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Admin Dashboard</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">

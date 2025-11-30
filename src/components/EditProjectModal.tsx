@@ -115,7 +115,7 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
       setNewImages([]);
       setNewDocuments([]);
     }
-  }, [project, open]);
+  }, [project?.id, open]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
