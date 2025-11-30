@@ -9,10 +9,10 @@ import DashboardStats from "@/components/DashboardStats";
 import SearchFilters, { FilterState } from "@/components/SearchFilters";
 import ProjectMapOverlay from "@/components/ProjectMapOverlay";
 import ProjectTable from "@/components/ProjectTable";
-import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, RefreshCw, User, LogOut, UserCheck } from "lucide-react";
+import { Shield, RefreshCw, User, LogOut, UserCheck, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserCredentials } from "@/contexts/UserCredentialsContext";
 import { useAppSettings } from "@/contexts/AppSettingsContext";
@@ -50,6 +50,31 @@ const Index = () => {
     year: 'all',
     status: 'all'
   });
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+
+    setDeferredPrompt(null);
+  };
 
   const hasMapAccess = user || !isMapLocked || isUserAuthenticated;
 
@@ -201,7 +226,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary to-background">
-      <PWAInstallPrompt />
+
 
       <header className="bg-card/80 backdrop-blur-sm border-b-4 border-[#FF5722] sticky top-0 z-50 shadow-md">
         <div className="container mx-auto px-4 py-3">
@@ -264,6 +289,19 @@ const Index = () => {
                     <span className="hidden sm:inline">Login</span>
                   </Button>
                 )
+              )}
+
+              {deferredPrompt && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleInstallClick}
+                  className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+                  title="Install App"
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">Install</span>
+                </Button>
               )}
 
               {user ? (
