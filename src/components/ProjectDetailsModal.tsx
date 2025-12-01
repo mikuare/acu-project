@@ -190,86 +190,107 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
 
                 {/* Project Information Tab */}
                 <TabsContent value="contract" className="pt-6 space-y-6">
-                  {/* Timeline */}
+                  {/* Project Information Table */}
                   <Card className="border-0 shadow-sm">
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-[#FF5722]" />
-                        Project Timeline
+                        <FileText className="w-5 h-5 text-[#FF5722]" />
+                        Project Information
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium text-slate-500 uppercase">Effectivity Date</p>
-                          <p className="font-semibold">{project.effectivity_date ? format(new Date(project.effectivity_date), "PPP") : "N/A"}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium text-slate-500 uppercase">Actual Start Date</p>
-                          <p className="font-semibold">{project.actual_start_date ? format(new Date(project.actual_start_date), "PPP") : "N/A"}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium text-slate-500 uppercase">Expiry Date</p>
-                          <p className="font-semibold">{project.expiry_date ? format(new Date(project.expiry_date), "PPP") : "N/A"}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                            {/* Timeline Section */}
+                            <tr className="bg-slate-50 dark:bg-slate-800/50">
+                              <td colSpan={2} className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-200 uppercase text-xs">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="w-4 h-4 text-[#FF5722]" />
+                                  Project Timeline
+                                </div>
+                              </td>
+                            </tr>
+                            <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                              <td className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 w-1/3">Effectivity Date</td>
+                              <td className="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {project.effectivity_date ? format(new Date(project.effectivity_date), "PPP") : "N/A"}
+                              </td>
+                            </tr>
+                            <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                              <td className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400">Actual Start Date</td>
+                              <td className="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {project.actual_start_date ? format(new Date(project.actual_start_date), "PPP") : "N/A"}
+                              </td>
+                            </tr>
+                            <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                              <td className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400">Expiry Date</td>
+                              <td className="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {project.expiry_date ? format(new Date(project.expiry_date), "PPP") : "N/A"}
+                              </td>
+                            </tr>
 
-                  {/* Team & Contact */}
-                  <Card className="border-0 shadow-sm">
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <User className="w-5 h-5 text-[#FF5722]" />
-                        Team & Contact
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-slate-100 rounded-full dark:bg-slate-800">
-                              <Briefcase className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium text-slate-500 uppercase">Project Engineer</p>
-                              <p className="font-medium">{project.engineer_name}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-slate-100 rounded-full dark:bg-slate-800">
-                              <User className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium text-slate-500 uppercase">Time Keeper</p>
-                              <p className="font-medium">{project.user_name}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="space-y-4">
-                          {project.contact_phone && (
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-slate-100 rounded-full dark:bg-slate-800">
-                                <Phone className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium text-slate-500 uppercase">Phone</p>
-                                <p className="font-medium">{project.contact_phone}</p>
-                              </div>
-                            </div>
-                          )}
-                          {project.contact_email && (
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-slate-100 rounded-full dark:bg-slate-800">
-                                <Mail className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium text-slate-500 uppercase">Email</p>
-                                <p className="font-medium">{project.contact_email}</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                            {/* Team Section */}
+                            <tr className="bg-slate-50 dark:bg-slate-800/50">
+                              <td colSpan={2} className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-200 uppercase text-xs">
+                                <div className="flex items-center gap-2">
+                                  <User className="w-4 h-4 text-[#FF5722]" />
+                                  Team Members
+                                </div>
+                              </td>
+                            </tr>
+                            <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                              <td className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400">Project Engineer</td>
+                              <td className="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {project.engineer_name}
+                              </td>
+                            </tr>
+                            <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                              <td className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400">Time Keeper/Checker</td>
+                              <td className="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {project.user_name}
+                              </td>
+                            </tr>
+
+                            {/* Contact Section */}
+                            {(project.contact_phone || project.contact_email || project.contact_social) && (
+                              <>
+                                <tr className="bg-slate-50 dark:bg-slate-800/50">
+                                  <td colSpan={2} className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-200 uppercase text-xs">
+                                    <div className="flex items-center gap-2">
+                                      <Phone className="w-4 h-4 text-[#FF5722]" />
+                                      Contact Information
+                                    </div>
+                                  </td>
+                                </tr>
+                                {project.contact_phone && (
+                                  <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                                    <td className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400">Phone Number</td>
+                                    <td className="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                      {project.contact_phone}
+                                    </td>
+                                  </tr>
+                                )}
+                                {project.contact_email && (
+                                  <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                                    <td className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400">Email Address</td>
+                                    <td className="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                      {project.contact_email}
+                                    </td>
+                                  </tr>
+                                )}
+                                {project.contact_social && (
+                                  <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                                    <td className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400">Social Media</td>
+                                    <td className="px-4 py-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                      {project.contact_social}
+                                    </td>
+                                  </tr>
+                                )}
+                              </>
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     </CardContent>
                   </Card>

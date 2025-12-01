@@ -16,14 +16,10 @@ interface ReportProjectModalProps {
 }
 
 const REPORT_CATEGORIES = [
-    "completed",
-    "defective",
-    "duplicate",
-    "unfinished",
-    "ghost",
-    "finished project",
-    "subject for edit",
-    "for deletion"
+    "For demobilize",
+    "Suspend",
+    "Cancelled",
+    "Implemented"
 ];
 
 const ReportProjectModal = ({ open, onOpenChange, project }: ReportProjectModalProps) => {

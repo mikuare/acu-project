@@ -5,10 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Upload, X as XIcon, MapPin, Trash2 } from "lucide-react";
-import { format } from "date-fns";
+
+import { Upload, X as XIcon, MapPin, Trash2 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -57,9 +56,9 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
   const [projectId, setProjectId] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("not_started");
-  const [effectivityDate, setEffectivityDate] = useState<Date | undefined>();
-  const [actualStartDate, setActualStartDate] = useState<Date | undefined>();
-  const [expiryDate, setExpiryDate] = useState<Date | undefined>();
+  const [effectivityDate, setEffectivityDate] = useState("");
+  const [actualStartDate, setActualStartDate] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
   const [contractCost, setContractCost] = useState("");
   const [engineerName, setEngineerName] = useState("");
   const [userName, setUserName] = useState("");
@@ -84,9 +83,9 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
       setProjectId(project.project_id);
       setDescription(project.description);
       setStatus(project.status);
-      setEffectivityDate(project.effectivity_date ? new Date(project.effectivity_date) : undefined);
-      setActualStartDate(project.actual_start_date ? new Date(project.actual_start_date) : undefined);
-      setExpiryDate(project.expiry_date ? new Date(project.expiry_date) : undefined);
+      setEffectivityDate(project.effectivity_date || "");
+      setActualStartDate(project.actual_start_date || "");
+      setExpiryDate(project.expiry_date || "");
       setContractCost(project.contract_cost?.toString() || "");
       setEngineerName(project.engineer_name);
       setUserName(project.user_name);
@@ -212,10 +211,10 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
         project_id: projectId,
         description,
         status,
-        effectivity_date: effectivityDate ? format(effectivityDate, 'yyyy-MM-dd') : null,
-        actual_start_date: actualStartDate ? format(actualStartDate, 'yyyy-MM-dd') : null,
-        expiry_date: expiryDate ? format(expiryDate, 'yyyy-MM-dd') : null,
-        project_date: actualStartDate ? format(actualStartDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+        effectivity_date: effectivityDate || null,
+        actual_start_date: actualStartDate || null,
+        expiry_date: expiryDate || null,
+        project_date: actualStartDate || new Date().toISOString().split('T')[0],
         contract_cost: contractCost ? parseFloat(contractCost) : null,
         engineer_name: engineerName,
         user_name: userName,
@@ -232,7 +231,10 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
 
       const { error: updateError } = await supabase
         .from('projects')
-        .update(updateData)
+        .update({
+          ...updateData,
+          status: status as any, // Cast to any since we're limiting values via dropdown
+        })
         .eq('id', project.id);
 
       if (updateError) {
@@ -336,10 +338,8 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="not_started">Not Yet Started</SelectItem>
                     <SelectItem value="ongoing">Ongoing</SelectItem>
                     <SelectItem value="implemented">Implemented</SelectItem>
-                    <SelectItem value="terminated">Terminated/Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -359,48 +359,33 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
             {/* Date Fields */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Effectivity Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {effectivityDate ? format(effectivityDate, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={effectivityDate} onSelect={setEffectivityDate} initialFocus />
-                  </PopoverContent>
-                </Popover>
+                <Label htmlFor="effectivityDate">Effectivity Date</Label>
+                <Input
+                  id="effectivityDate"
+                  type="date"
+                  value={effectivityDate}
+                  onChange={(e) => setEffectivityDate(e.target.value)}
+                />
               </div>
 
               <div className="space-y-2">
-                <Label>Actual Start Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {actualStartDate ? format(actualStartDate, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={actualStartDate} onSelect={setActualStartDate} initialFocus />
-                  </PopoverContent>
-                </Popover>
+                <Label htmlFor="actualStartDate">Actual Start Date</Label>
+                <Input
+                  id="actualStartDate"
+                  type="date"
+                  value={actualStartDate}
+                  onChange={(e) => setActualStartDate(e.target.value)}
+                />
               </div>
 
               <div className="space-y-2">
-                <Label>Expiry Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {expiryDate ? format(expiryDate, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={expiryDate} onSelect={setExpiryDate} initialFocus />
-                  </PopoverContent>
-                </Popover>
+                <Label htmlFor="expiryDate">Expiry Date</Label>
+                <Input
+                  id="expiryDate"
+                  type="date"
+                  value={expiryDate}
+                  onChange={(e) => setExpiryDate(e.target.value)}
+                />
               </div>
             </div>
 

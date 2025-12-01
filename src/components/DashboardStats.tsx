@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Gavel, Clock, CheckCircle2, XCircle, Building2 } from "lucide-react";
+import { Gavel, CheckCircle2, Building2 } from "lucide-react";
 import {
     HoverCard,
     HoverCardContent,
@@ -134,17 +134,13 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
     const stats = useMemo(() => {
         const counts = {
             total: projects.length,
-            not_started: 0,
             ongoing: 0,
             implemented: 0,
-            terminated: 0,
             totalCost: 0,
             breakdowns: {
                 total: { Luzon: 0, Visayas: 0, Mindanao: 0 },
-                not_started: { Luzon: 0, Visayas: 0, Mindanao: 0 },
                 ongoing: { Luzon: 0, Visayas: 0, Mindanao: 0 },
                 implemented: { Luzon: 0, Visayas: 0, Mindanao: 0 },
-                terminated: { Luzon: 0, Visayas: 0, Mindanao: 0 },
             }
         };
 
@@ -161,21 +157,13 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
             // Total
             incrementBreakdown('total');
 
-            if (p.status === 'not_started') {
-                counts.not_started++;
-                incrementBreakdown('not_started');
-            }
-            else if (p.status === 'ongoing' || p.status === 'active') {
+            if (p.status === 'ongoing' || p.status === 'active') {
                 counts.ongoing++;
                 incrementBreakdown('ongoing');
             }
             else if (p.status === 'implemented' || p.status === 'completed') {
                 counts.implemented++;
                 incrementBreakdown('implemented');
-            }
-            else if (p.status === 'terminated' || p.status === 'cancelled') {
-                counts.terminated++;
-                incrementBreakdown('terminated');
             }
 
             // Sum up contract cost
@@ -250,7 +238,7 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
             </div>
 
             {/* 3. Stats Cards Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 <StatCard
                     title="Total Projects"
                     subtitle="Committed"
@@ -264,19 +252,7 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
                     onClick={() => onStatusChange('all')}
                     bubbleColor="bg-purple-600"
                 />
-                <StatCard
-                    title="Not Yet Started"
-                    subtitle="Awaiting Start"
-                    count={stats.not_started}
-                    percentage={getPercentage(stats.not_started)}
-                    color={{ bg: "bg-blue-50", text: "text-blue-600", iconBg: "bg-blue-100" }}
-                    icon={Clock}
-                    breakdown={stats.breakdowns.not_started}
-                    isActive={currentStatus === 'not_started'}
-                    isDimmed={currentStatus !== 'all' && currentStatus !== 'not_started'}
-                    onClick={() => onStatusChange('not_started')}
-                    bubbleColor="bg-blue-600"
-                />
+
                 <StatCard
                     title="Ongoing Projects"
                     subtitle="In Progress"
@@ -303,19 +279,7 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
                     onClick={() => onStatusChange('implemented')}
                     bubbleColor="bg-green-600"
                 />
-                <StatCard
-                    title="Terminated Projects"
-                    subtitle="Discontinued"
-                    count={stats.terminated}
-                    percentage={getPercentage(stats.terminated)}
-                    color={{ bg: "bg-red-50", text: "text-red-600", iconBg: "bg-red-100" }}
-                    icon={XCircle}
-                    breakdown={stats.breakdowns.terminated}
-                    isActive={currentStatus === 'terminated'}
-                    isDimmed={currentStatus !== 'all' && currentStatus !== 'terminated'}
-                    onClick={() => onStatusChange('terminated')}
-                    bubbleColor="bg-red-600"
-                />
+
             </div>
         </div>
     );
