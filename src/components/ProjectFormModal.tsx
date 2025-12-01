@@ -681,7 +681,7 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
                 <SelectContent>
                   <SelectItem value="not_started">Not Yet Started</SelectItem>
                   <SelectItem value="ongoing">Ongoing</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="implemented">Implemented</SelectItem>
                   <SelectItem value="terminated">Terminated/Cancelled</SelectItem>
                 </SelectContent>
               </Select>

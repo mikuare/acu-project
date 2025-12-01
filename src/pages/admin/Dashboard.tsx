@@ -255,9 +255,9 @@ const Dashboard = () => {
                 {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
               </button>
               <img
-                src="/qmaz-logo.jpg"
+                src="/qmaz-logo-new.png"
                 alt="QMAZ Logo"
-                className="h-10 w-10 rounded-full object-cover shadow-sm"
+                className="h-10 w-10 object-contain"
               />
               <div className="hidden sm:block min-w-0">
                 <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Admin Dashboard</h1>
@@ -636,7 +636,7 @@ const Dashboard = () => {
                                   variant="outline"
                                   className={
                                     project.status === 'active' ? 'border-green-500 text-green-700' :
-                                      project.status === 'completed' ? 'border-blue-500 text-blue-700' :
+                                      project.status === 'implemented' ? 'border-blue-500 text-blue-700' :
                                         'border-orange-500 text-orange-700'
                                   }
                                 >
@@ -704,7 +704,7 @@ const Dashboard = () => {
                                         <Badge
                                           variant="outline"
                                           className={`mt-1 ${project.status === 'active' ? 'border-green-500 text-green-700' :
-                                            project.status === 'completed' ? 'border-blue-500 text-blue-700' :
+                                            project.status === 'implemented' ? 'border-blue-500 text-blue-700' :
                                               'border-orange-500 text-orange-700'
                                             }`}
                                         >

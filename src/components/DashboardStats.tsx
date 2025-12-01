@@ -136,14 +136,14 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
             total: projects.length,
             not_started: 0,
             ongoing: 0,
-            completed: 0,
+            implemented: 0,
             terminated: 0,
             totalCost: 0,
             breakdowns: {
                 total: { Luzon: 0, Visayas: 0, Mindanao: 0 },
                 not_started: { Luzon: 0, Visayas: 0, Mindanao: 0 },
                 ongoing: { Luzon: 0, Visayas: 0, Mindanao: 0 },
-                completed: { Luzon: 0, Visayas: 0, Mindanao: 0 },
+                implemented: { Luzon: 0, Visayas: 0, Mindanao: 0 },
                 terminated: { Luzon: 0, Visayas: 0, Mindanao: 0 },
             }
         };
@@ -169,9 +169,9 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
                 counts.ongoing++;
                 incrementBreakdown('ongoing');
             }
-            else if (p.status === 'completed') {
-                counts.completed++;
-                incrementBreakdown('completed');
+            else if (p.status === 'implemented' || p.status === 'completed') {
+                counts.implemented++;
+                incrementBreakdown('implemented');
             }
             else if (p.status === 'terminated' || p.status === 'cancelled') {
                 counts.terminated++;
@@ -201,8 +201,8 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
             <div className="bg-white rounded-t-lg p-4 flex flex-col md:flex-row items-center justify-between border-b-4 border-[#FF5722]">
                 {/* Left: Logo */}
                 <div className="flex items-center gap-4 mb-4 md:mb-0">
-                    <div className="w-20 h-20 rounded-full border-2 border-gray-100 flex items-center justify-center bg-white shadow-sm overflow-hidden">
-                        <img src="/qmaz-logo.jpg" alt="QMAZ Logo" className="w-full h-full object-contain" />
+                    <div className="w-20 h-20 flex items-center justify-center">
+                        <img src="/qmaz-logo-new.png" alt="QMAZ Logo" className="w-full h-full object-contain" />
                     </div>
                 </div>
 
@@ -212,14 +212,14 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
                         QMAZ HOLDINGS INC. PROJECTS MAP
                     </h1>
                     <p className="text-[#FF5722] font-bold text-sm md:text-base tracking-wide uppercase">
-                        Track and Manage Projects in Map
+                        Track and Manage Project System Implementation
                     </p>
                 </div>
 
                 {/* Right: Illustration */}
                 <div className="hidden md:flex items-center">
                     <div className="relative">
-                        <img src="/header-illustration.png" alt="Construction Illustration" className="h-24 w-auto object-contain" />
+                        <img src="/header-illustration-new.png" alt="Construction Illustration" className="h-24 w-auto object-contain" />
                     </div>
                 </div>
             </div>
@@ -291,16 +291,16 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
                     bubbleColor="bg-orange-600"
                 />
                 <StatCard
-                    title="Completed Projects"
+                    title="Implemented Projects"
                     subtitle="Build as specified"
-                    count={stats.completed}
-                    percentage={getPercentage(stats.completed)}
+                    count={stats.implemented}
+                    percentage={getPercentage(stats.implemented)}
                     color={{ bg: "bg-green-50", text: "text-green-600", iconBg: "bg-green-100" }}
                     icon={CheckCircle2}
-                    breakdown={stats.breakdowns.completed}
-                    isActive={currentStatus === 'completed'}
-                    isDimmed={currentStatus !== 'all' && currentStatus !== 'completed'}
-                    onClick={() => onStatusChange('completed')}
+                    breakdown={stats.breakdowns.implemented}
+                    isActive={currentStatus === 'implemented'}
+                    isDimmed={currentStatus !== 'all' && currentStatus !== 'implemented'}
+                    onClick={() => onStatusChange('implemented')}
                     bubbleColor="bg-green-600"
                 />
                 <StatCard

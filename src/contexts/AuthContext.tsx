@@ -174,7 +174,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: "You can now sign in with your new password",
         duration: 2000,
       });
-      
+
       // Navigate to sign in page
       navigate('/admin/signin');
     } catch (error: any) {

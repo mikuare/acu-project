@@ -99,7 +99,7 @@ const ViewProjectsModal = ({ open, onOpenChange, projects, onRefresh }: ViewProj
               </DialogTitle>
               <DialogDescription className="text-xs sm:text-sm mt-1 leading-relaxed">
                 {isMobile ? 'Tap any card to navigate to the map' : (viewMode === 'table' ? 'Click any row' : 'Tap any card')} to navigate.
-          </DialogDescription>
+              </DialogDescription>
             </div>
             {/* Hide toggle buttons on mobile, show only on tablet and desktop */}
             {!isMobile && (
@@ -192,11 +192,10 @@ const ViewProjectsModal = ({ open, onOpenChange, projects, onRefresh }: ViewProj
                             </Badge>
                             <Badge
                               variant="outline"
-                              className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 ${
-                                project.status === 'active' ? 'border-green-500 text-green-700' :
-                                project.status === 'completed' ? 'border-blue-500 text-blue-700' :
-                                'border-orange-500 text-orange-700'
-                              }`}
+                              className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 ${project.status === 'active' ? 'border-green-500 text-green-700' :
+                                  project.status === 'implemented' ? 'border-blue-500 text-blue-700' :
+                                    'border-orange-500 text-orange-700'
+                                }`}
                             >
                               {project.status}
                             </Badge>
@@ -236,9 +235,9 @@ const ViewProjectsModal = ({ open, onOpenChange, projects, onRefresh }: ViewProj
             <div className="rounded-md border overflow-hidden">
               <ScrollArea className="h-[calc(95vh-240px)] sm:h-[calc(90vh-260px)] max-h-[500px]">
                 <div className="overflow-x-auto">
-              <Table>
+                  <Table>
                     <TableHeader className="sticky top-0 bg-background z-10">
-                  <TableRow>
+                      <TableRow>
                         <TableHead className="text-[10px] sm:text-sm px-2 sm:px-4 whitespace-nowrap">ID</TableHead>
                         <TableHead className="text-[10px] sm:text-sm px-2 sm:px-4 whitespace-nowrap">Branch</TableHead>
                         <TableHead className="text-[10px] sm:text-sm px-2 sm:px-4 whitespace-nowrap">Status</TableHead>
@@ -247,42 +246,41 @@ const ViewProjectsModal = ({ open, onOpenChange, projects, onRefresh }: ViewProj
                         <TableHead className="text-[10px] sm:text-sm px-2 sm:px-4 whitespace-nowrap hidden md:table-cell">Date</TableHead>
                         <TableHead className="text-[10px] sm:text-sm px-2 sm:px-4 whitespace-nowrap hidden lg:table-cell">Location</TableHead>
                         <TableHead className="w-[50px] sm:w-[60px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProjects.length === 0 ? (
-                    <TableRow>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredProjects.length === 0 ? (
+                        <TableRow>
                           <TableCell colSpan={8} className="text-center py-12 text-muted-foreground text-sm">
                             No projects found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredProjects.map((project) => (
-                      <TableRow
-                        key={project.id}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredProjects.map((project) => (
+                          <TableRow
+                            key={project.id}
                             className="cursor-pointer hover:bg-muted/50 transition-colors active:bg-muted"
-                        onClick={() => handleNavigateToMap(project)}
-                      >
+                            onClick={() => handleNavigateToMap(project)}
+                          >
                             <TableCell className="font-medium text-[11px] sm:text-sm px-2 sm:px-4 whitespace-nowrap">
                               {project.project_id}
                             </TableCell>
                             <TableCell className="px-2 sm:px-4">
                               <Badge className={`${branchColors[project.branch]} text-white text-[9px] sm:text-xs px-1 sm:px-2 py-0.5`}>
-                            {project.branch}
-                          </Badge>
-                        </TableCell>
+                                {project.branch}
+                              </Badge>
+                            </TableCell>
                             <TableCell className="px-2 sm:px-4">
-                          <Badge
-                            variant="outline"
-                                className={`text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 ${
-                              project.status === 'active' ? 'border-green-500 text-green-700' :
-                              project.status === 'completed' ? 'border-blue-500 text-blue-700' :
-                              'border-orange-500 text-orange-700'
-                                }`}
-                          >
-                            {project.status}
-                          </Badge>
-                        </TableCell>
+                              <Badge
+                                variant="outline"
+                                className={`text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 ${project.status === 'active' ? 'border-green-500 text-green-700' :
+                                    project.status === 'completed' ? 'border-blue-500 text-blue-700' :
+                                      'border-orange-500 text-orange-700'
+                                  }`}
+                              >
+                                {project.status}
+                              </Badge>
+                            </TableCell>
                             <TableCell className="text-[11px] sm:text-sm px-2 sm:px-4 max-w-[100px] sm:max-w-[150px] truncate">
                               {project.engineer_name}
                             </TableCell>
@@ -294,19 +292,19 @@ const ViewProjectsModal = ({ open, onOpenChange, projects, onRefresh }: ViewProj
                             </TableCell>
                             <TableCell className="text-[10px] sm:text-xs font-mono px-2 sm:px-4 whitespace-nowrap hidden lg:table-cell">
                               {project.latitude.toFixed(3)}, {project.longitude.toFixed(3)}
-                        </TableCell>
+                            </TableCell>
                             <TableCell className="px-1 sm:px-2">
                               <div className="flex items-center justify-center">
                                 <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </ScrollArea>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </ScrollArea>
             </div>
           )}
 

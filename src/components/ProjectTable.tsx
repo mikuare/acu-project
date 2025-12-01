@@ -35,7 +35,7 @@ interface ProjectTableProps {
 
 const getStatusColor = (status: string) => {
     switch (status) {
-        case 'completed': return 'bg-emerald-500 hover:bg-emerald-600';
+        case 'implemented': return 'bg-emerald-500 hover:bg-emerald-600';
         case 'ongoing':
         case 'active': return 'bg-amber-500 hover:bg-amber-600';
         case 'not_started': return 'bg-slate-500 hover:bg-slate-600';

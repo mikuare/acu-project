@@ -233,16 +233,16 @@ const Index = () => {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <img
-                src="/qmaz-logo.jpg"
+                src="/qmaz-logo-new.png"
                 alt="QMAZ Logo"
-                className="h-10 w-10 rounded-full object-cover shadow-sm"
+                className="h-10 w-10 object-contain"
               />
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-foreground">
                   QMAZ HOLDINGS INC. PROJECTS MAP
                 </h1>
                 <p className="text-xs text-muted-foreground hidden sm:block">
-                  Track and Manage Projects in Map
+                  Track and Manage Project System Implementation
                 </p>
               </div>
             </div>
