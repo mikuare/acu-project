@@ -9,6 +9,8 @@ import DashboardStats from "@/components/DashboardStats";
 import SearchFilters, { FilterState } from "@/components/SearchFilters";
 import ProjectMapOverlay from "@/components/ProjectMapOverlay";
 import ProjectTable from "@/components/ProjectTable";
+import { CountUp } from "@/components/ui/CountUp";
+import ChatBot from "@/components/ChatBot";
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -320,9 +322,9 @@ const Index = () => {
                 </Link>
               )}
             </div>
-          </div>
-        </div>
-      </header>
+          </div >
+        </div >
+      </header >
 
       <main className="container mx-auto p-4">
         {!hasMapAccess ? (
@@ -382,7 +384,7 @@ const Index = () => {
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 bg-[#FF5722] text-white font-bold text-sm px-4 py-2 rounded-full shadow-md">
                   <img src="/folder-icon.png" alt="Folder" className="w-4 h-4 invert" />
-                  {filteredProjects.length} {filteredProjects.length === 1 ? 'Project' : 'Projects'} Found
+                  <CountUp end={filteredProjects.length} suffix={filteredProjects.length === 1 ? ' Project Found' : ' Projects Found'} />
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-4">
@@ -418,21 +420,25 @@ const Index = () => {
                 projects={filteredProjects}
                 onProjectClick={handleViewFullDetails}
               />
-            )}
+            )
+            }
           </div>
         )}
       </main>
 
-      {showProjectDetails && selectedProject && (
-        <ProjectDetailsModal
-          project={selectedProject}
-          open={showProjectDetails}
-          onOpenChange={setShowProjectDetails}
-        />
-      )}
+      {
+        showProjectDetails && selectedProject && (
+          <ProjectDetailsModal
+            project={selectedProject}
+            open={showProjectDetails}
+            onOpenChange={setShowProjectDetails}
+          />
+        )
+      }
 
       <UserLoginModal open={showUserLogin} onOpenChange={setShowUserLogin} />
-    </div>
+      <ChatBot projects={filteredProjects} />
+    </div >
   );
 };
 

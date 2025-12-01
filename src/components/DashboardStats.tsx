@@ -7,6 +7,7 @@ import {
     HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { getIslandGroupForRegion, Region } from '@/utils/philippineData';
+import { CountUp } from "@/components/ui/CountUp";
 
 interface Project {
     status: string;
@@ -83,7 +84,7 @@ const StatCard = ({
                         {/* Count */}
                         <div className="mb-1">
                             <h3 className={`text-4xl font-bold ${color.text} tracking-tight`}>
-                                {count.toLocaleString()}
+                                <CountUp end={count} />
                             </h3>
                         </div>
 
@@ -226,12 +227,16 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
                     <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center">
                         <div className="text-center">
                             <p className="text-sm md:text-base font-bold uppercase tracking-widest opacity-90 mb-1">Total Projects</p>
-                            <p className="text-3xl md:text-4xl font-bold">{stats.total.toLocaleString()}</p>
+                            <p className="text-3xl md:text-4xl font-bold">
+                                <CountUp end={stats.total} />
+                            </p>
                         </div>
                         <div className="h-12 w-px bg-white/30 hidden md:block"></div>
                         <div className="text-center">
                             <p className="text-sm md:text-base font-bold uppercase tracking-widest opacity-90 mb-1">All Projects Total Cost</p>
-                            <p className="text-3xl md:text-4xl font-bold">{formatCurrency(stats.totalCost)}</p>
+                            <p className="text-3xl md:text-4xl font-bold">
+                                <CountUp end={stats.totalCost} prefix="₱" />
+                            </p>
                         </div>
                     </div>
                 </div>

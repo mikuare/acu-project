@@ -45,8 +45,14 @@ const ProjectSidebar = ({ projects, selectedProjectId, onProjectSelect, onViewDe
     const [currentPage, setCurrentPage] = useState(1);
 
     // Reset to first page when projects change
+    // Adjust current page if projects list shrinks, but don't reset on every update
     useEffect(() => {
-        setCurrentPage(1);
+        const totalPages = Math.ceil(projects.length / ITEMS_PER_PAGE);
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        } else if (totalPages === 0) {
+            setCurrentPage(1);
+        }
     }, [projects]);
 
     const totalPages = Math.ceil(projects.length / ITEMS_PER_PAGE);
