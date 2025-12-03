@@ -83,8 +83,8 @@ const SearchFilters = ({ onFilterChange, availableYears, viewMode, onViewModeCha
 
             {/* Bottom Row: Filters and View Toggle */}
             <div className="flex flex-col lg:flex-row gap-3 items-center">
-                {/* Filters Group */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 flex-1 w-full">
+                {/* Filters Group - Hidden on mobile (< 768px) */}
+                <div className="hidden md:grid grid-cols-2 md:grid-cols-4 gap-2 flex-1 w-full">
                     {/* Category Filter */}
                     <Select value={category} onValueChange={setCategory}>
                         <SelectTrigger className="h-10">

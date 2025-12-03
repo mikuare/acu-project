@@ -203,7 +203,13 @@ const Index = () => {
 
   const handleProjectSelect = (project: any) => {
     setSelectedProjectId(project.id);
-    setShowProjectDetails(false);
+    // On mobile (< 768px), open the full details modal directly
+    if (window.innerWidth < 768) {
+      setShowProjectDetails(true);
+    } else {
+      // On desktop, show the overlay (which is handled by conditional rendering below)
+      setShowProjectDetails(false);
+    }
   };
 
   const handleViewFullDetails = (project: any) => {
@@ -232,24 +238,24 @@ const Index = () => {
 
       <header className="bg-card/80 backdrop-blur-sm border-b-4 border-[#FF5722] sticky top-0 z-50 shadow-md">
         <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start">
               <img
                 src="/qmaz-logo-new.png"
                 alt="QMAZ Logo"
                 className="h-10 w-10 object-contain"
               />
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold text-foreground">
+              <div className="text-center md:text-left">
+                <h1 className="text-sm sm:text-xl font-bold text-foreground whitespace-nowrap">
                   QMAZ HOLDINGS INC. PROJECTS MAP
                 </h1>
-                <p className="text-xs text-muted-foreground hidden sm:block">
+                <p className="text-[10px] sm:text-xs text-muted-foreground block">
                   Track and Manage Project System Implementation
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full md:w-auto justify-center md:justify-end">
               <Button
                 variant="ghost"
                 size="icon"
@@ -326,7 +332,7 @@ const Index = () => {
         </div >
       </header >
 
-      <main className="container mx-auto p-4">
+      <main className="container mx-auto p-4 space-y-4">
         {!hasMapAccess ? (
           <div className="flex items-center justify-center min-h-[600px]">
             <Card className="w-full max-w-md">
@@ -365,13 +371,17 @@ const Index = () => {
             </Card>
           </div>
         ) : (
-          <div className="space-y-4">
-            <DashboardStats
-              projects={filteredProjects}
-              currentStatus={currentStatus}
-              onStatusChange={handleStatusChange}
-            />
+          <>
+            {/* Dashboard Stats - Hidden on Mobile */}
+            <div className="hidden md:block">
+              <DashboardStats
+                projects={projects}
+                currentStatus={currentStatus}
+                onStatusChange={handleStatusChange}
+              />
+            </div>
 
+            {/* Search Filters */}
             <SearchFilters
               onFilterChange={handleFilterChange}
               availableYears={availableYears}
@@ -382,13 +392,15 @@ const Index = () => {
 
             {viewMode === 'map' ? (
               <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 bg-[#FF5722] text-white font-bold text-sm px-4 py-2 rounded-full shadow-md">
+                {/* Projects Found Badge - Hidden on Mobile */}
+                <div className="hidden md:inline-flex items-center gap-2 bg-[#FF5722] text-white font-bold text-sm px-4 py-2 rounded-full shadow-md">
                   <img src="/folder-icon.png" alt="Folder" className="w-4 h-4 invert" />
                   <CountUp end={filteredProjects.length} suffix={filteredProjects.length === 1 ? ' Project Found' : ' Projects Found'} />
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-4">
-                  <div className="w-full lg:w-80 h-[580px] border-r border-border/50 flex flex-col">
+                  {/* Sidebar - Hidden on Mobile */}
+                  <div className="hidden md:flex w-full lg:w-80 h-[580px] border-r border-border/50 flex-col">
                     <ProjectSidebar
                       projects={filteredProjects}
                       selectedProjectId={selectedProjectId}
@@ -397,7 +409,7 @@ const Index = () => {
                     />
                   </div>
 
-                  <div className="flex-1 h-[580px] overflow-hidden flex relative">
+                  <div className="w-full h-[75vh] md:h-[580px] relative rounded-lg overflow-hidden shadow-md">
                     <PhilippinesMapMapbox
                       projects={filteredProjects}
                       onProjectUpdate={fetchProjects}
@@ -420,9 +432,8 @@ const Index = () => {
                 projects={filteredProjects}
                 onProjectClick={handleViewFullDetails}
               />
-            )
-            }
-          </div>
+            )}
+          </>
         )}
       </main>
 
@@ -437,7 +448,6 @@ const Index = () => {
       }
 
       <UserLoginModal open={showUserLogin} onOpenChange={setShowUserLogin} />
-      <ChatBot projects={filteredProjects} />
     </div >
   );
 };

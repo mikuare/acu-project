@@ -70,7 +70,7 @@ const MapStyleSelector = ({ currentStyle, onStyleChange }: MapStyleSelectorProps
   const currentStyleName = mapStyles.find(s => s.value === currentStyle)?.name || 'Streets';
 
   return (
-    <div className="absolute top-4 right-4 z-[1000]">
+    <div className="absolute top-4 right-4 z-[2000]">
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <Button
@@ -83,9 +83,9 @@ const MapStyleSelector = ({ currentStyle, onStyleChange }: MapStyleSelectorProps
             <span className="sm:hidden">Map</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent 
-          align="end" 
-          className="w-56 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm"
+        <DropdownMenuContent
+          align="end"
+          className="w-56 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm z-[2000]"
         >
           <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
             Map Style

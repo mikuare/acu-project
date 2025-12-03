@@ -578,238 +578,236 @@ const Dashboard = () => {
               </ScrollArea>
             ) : (
               /* Table View */
-              <div className="overflow-x-auto">
-                <ScrollArea className="h-[600px]">
-                  <div className="rounded-md border min-w-[800px]">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[40px]"></TableHead>
-                          <TableHead className="w-[50px]">
-                            <ImageIcon className="w-4 h-4 mx-auto" />
-                          </TableHead>
-                          <TableHead>Project ID</TableHead>
-                          <TableHead>Branch</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Description</TableHead>
-                          <TableHead>Region/Province</TableHead>
-                          <TableHead>Cost</TableHead>
-                          <TableHead>Engineer</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {projects.map((project) => (
-                          <>
-                            <TableRow
-                              key={project.id}
-                              className="cursor-pointer hover:bg-muted/50"
-                              onClick={() => setExpandedRow(expandedRow === project.id ? null : project.id)}
-                            >
-                              <TableCell>
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  {expandedRow === project.id ? (
-                                    <Eye className="w-4 h-4" />
-                                  ) : (
-                                    <Eye className="w-4 h-4 opacity-50" />
-                                  )}
-                                </Button>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                {project.image_url ? (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {project.image_url.split(',').filter(Boolean).length}
-                                  </Badge>
+              <ScrollArea className="h-[600px] w-full rounded-md border">
+                <div className="min-w-[1200px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[40px]"></TableHead>
+                        <TableHead className="w-[50px]">
+                          <ImageIcon className="w-4 h-4 mx-auto" />
+                        </TableHead>
+                        <TableHead>Project ID</TableHead>
+                        <TableHead>Branch</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Region/Province</TableHead>
+                        <TableHead>Cost</TableHead>
+                        <TableHead>Engineer</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {projects.map((project) => (
+                        <>
+                          <TableRow
+                            key={project.id}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => setExpandedRow(expandedRow === project.id ? null : project.id)}
+                          >
+                            <TableCell>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                {expandedRow === project.id ? (
+                                  <Eye className="w-4 h-4" />
                                 ) : (
-                                  <span className="text-muted-foreground text-xs">-</span>
+                                  <Eye className="w-4 h-4 opacity-50" />
                                 )}
-                              </TableCell>
-                              <TableCell className="font-medium">{project.project_id}</TableCell>
-                              <TableCell>
-                                <Badge className={`${branchColors[project.branch]} text-white`}>
-                                  {project.branch}
+                              </Button>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {project.image_url ? (
+                                <Badge variant="secondary" className="text-xs">
+                                  {project.image_url.split(',').filter(Boolean).length}
                                 </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant="outline"
-                                  className={
-                                    project.status === 'active' ? 'border-green-500 text-green-700' :
-                                      project.status === 'implemented' ? 'border-blue-500 text-blue-700' :
-                                        'border-orange-500 text-orange-700'
-                                  }
+                              ) : (
+                                <span className="text-muted-foreground text-xs">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="font-medium">{project.project_id}</TableCell>
+                            <TableCell>
+                              <Badge className={`${branchColors[project.branch]} text-white`}>
+                                {project.branch}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                className={
+                                  project.status === 'active' ? 'border-green-500 text-green-700' :
+                                    project.status === 'implemented' ? 'border-blue-500 text-blue-700' :
+                                      'border-orange-500 text-orange-700'
+                                }
+                              >
+                                {project.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-[300px] truncate">
+                              {project.description}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col">
+                                <span className="text-xs font-medium">{project.province || '-'}</span>
+                                <span className="text-[10px] text-muted-foreground">{project.region || '-'}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {project.contract_cost ? (
+                                <span className="font-medium text-orange-600">
+                                  {new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(project.contract_cost)}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>{project.engineer_name}</TableCell>
+                            <TableCell>{format(new Date(project.project_date), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1 sm:gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEdit(project)}
+                                  className="h-8 w-8 p-0 sm:h-9 sm:w-9"
                                 >
-                                  {project.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="max-w-[300px] truncate">
-                                {project.description}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex flex-col">
-                                  <span className="text-xs font-medium">{project.province || '-'}</span>
-                                  <span className="text-[10px] text-muted-foreground">{project.region || '-'}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                {project.contract_cost ? (
-                                  <span className="font-medium text-orange-600">
-                                    {new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(project.contract_cost)}
-                                  </span>
-                                ) : (
-                                  <span className="text-muted-foreground text-xs">-</span>
-                                )}
-                              </TableCell>
-                              <TableCell>{project.engineer_name}</TableCell>
-                              <TableCell>{format(new Date(project.project_date), 'MMM dd, yyyy')}</TableCell>
-                              <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex items-center justify-end gap-1 sm:gap-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleEdit(project)}
-                                    className="h-8 w-8 p-0 sm:h-9 sm:w-9"
-                                  >
-                                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDeleteClick(project.id)}
-                                    className="text-destructive hover:text-destructive h-8 w-8 p-0 sm:h-9 sm:w-9"
-                                  >
-                                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                  </Button>
+                                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteClick(project.id)}
+                                  className="text-destructive hover:text-destructive h-8 w-8 p-0 sm:h-9 sm:w-9"
+                                >
+                                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                          {expandedRow === project.id && (
+                            <TableRow key={`${project.id}-details`}>
+                              <TableCell colSpan={9} className="bg-muted/30">
+                                <div className="p-2 sm:p-4 space-y-3">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
+                                    <div>
+                                      <p className="text-xs font-medium text-muted-foreground">Project ID</p>
+                                      <p className="text-sm font-semibold">{project.project_id}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-medium text-muted-foreground">Branch</p>
+                                      <Badge className={`${branchColors[project.branch]} text-white mt-1`}>
+                                        {project.branch}
+                                      </Badge>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-medium text-muted-foreground">Status</p>
+                                      <Badge
+                                        variant="outline"
+                                        className={`mt-1 ${project.status === 'active' ? 'border-green-500 text-green-700' :
+                                          project.status === 'implemented' ? 'border-blue-500 text-blue-700' :
+                                            'border-orange-500 text-orange-700'
+                                          }`}
+                                      >
+                                        {project.status}
+                                      </Badge>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-medium text-muted-foreground">Project Engineer</p>
+                                      <p className="text-sm">{project.engineer_name}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-medium text-muted-foreground">Time Keeper/Checker</p>
+                                      <p className="text-sm">{project.user_name}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-medium text-muted-foreground">Project Date</p>
+                                      <p className="text-sm">{format(new Date(project.project_date), 'PPP')}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-medium text-muted-foreground">Location</p>
+                                      <p className="text-xs font-mono">
+                                        {project.latitude.toFixed(6)}, {project.longitude.toFixed(6)}
+                                      </p>
+                                    </div>
+                                    {project.contact_phone && (
+                                      <div>
+                                        <p className="text-xs font-medium text-muted-foreground">Phone</p>
+                                        <p className="text-sm">{project.contact_phone}</p>
+                                      </div>
+                                    )}
+                                    {project.contact_email && (
+                                      <div>
+                                        <p className="text-xs font-medium text-muted-foreground">Email</p>
+                                        <p className="text-sm">{project.contact_email}</p>
+                                      </div>
+                                    )}
+                                    {project.contact_social && (
+                                      <div>
+                                        <p className="text-xs font-medium text-muted-foreground">Social Media</p>
+                                        <p className="text-sm">{project.contact_social}</p>
+                                      </div>
+                                    )}
+                                    <div className="col-span-2 md:col-span-3">
+                                      <p className="text-xs font-medium text-muted-foreground">Description</p>
+                                      <p className="text-sm mt-1">{project.description}</p>
+                                    </div>
+                                    {project.additional_details && (
+                                      <div className="col-span-2 md:col-span-3">
+                                        <p className="text-xs font-medium text-muted-foreground">Additional Details</p>
+                                        <p className="text-sm mt-1">{project.additional_details}</p>
+                                      </div>
+                                    )}
+                                    {project.image_url && (() => {
+                                      const projectImageUrls = project.image_url.split(',').filter(Boolean).map(url => url.trim());
+                                      return projectImageUrls.length > 0 && (
+                                        <div className="col-span-2 md:col-span-3">
+                                          <p className="text-xs font-medium text-muted-foreground mb-2">
+                                            Project Images ({projectImageUrls.length})
+                                          </p>
+                                          <div className={`grid gap-2 ${projectImageUrls.length === 1 ? 'grid-cols-1 max-w-md' :
+                                            projectImageUrls.length === 2 ? 'grid-cols-2' :
+                                              'grid-cols-2 md:grid-cols-3'
+                                            }`}>
+                                            {projectImageUrls.map((url, index) => (
+                                              <div
+                                                key={index}
+                                                className="relative group cursor-pointer"
+                                                onClick={() => handleImageClick(projectImageUrls, index)}
+                                              >
+                                                <img
+                                                  src={url}
+                                                  alt={`Project ${index + 1}`}
+                                                  className="w-full h-32 object-cover rounded-lg border hover:opacity-90 transition-opacity"
+                                                />
+                                                <div className="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-2 py-1 rounded pointer-events-none">
+                                                  {index + 1}/{projectImageUrls.length}
+                                                </div>
+                                                <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
+                                                  <div className="bg-white/90 px-2 py-1 rounded text-xs font-medium">
+                                                    Click to enlarge
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      );
+                                    })()}
+                                    <div className="col-span-2 md:col-span-3">
+                                      <p className="text-xs text-muted-foreground">
+                                        Submitted: {format(new Date(project.created_at), 'PPP \'at\' p')}
+                                      </p>
+                                    </div>
+                                  </div>
                                 </div>
                               </TableCell>
                             </TableRow>
-                            {expandedRow === project.id && (
-                              <TableRow key={`${project.id}-details`}>
-                                <TableCell colSpan={9} className="bg-muted/30">
-                                  <div className="p-2 sm:p-4 space-y-3">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
-                                      <div>
-                                        <p className="text-xs font-medium text-muted-foreground">Project ID</p>
-                                        <p className="text-sm font-semibold">{project.project_id}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs font-medium text-muted-foreground">Branch</p>
-                                        <Badge className={`${branchColors[project.branch]} text-white mt-1`}>
-                                          {project.branch}
-                                        </Badge>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs font-medium text-muted-foreground">Status</p>
-                                        <Badge
-                                          variant="outline"
-                                          className={`mt-1 ${project.status === 'active' ? 'border-green-500 text-green-700' :
-                                            project.status === 'implemented' ? 'border-blue-500 text-blue-700' :
-                                              'border-orange-500 text-orange-700'
-                                            }`}
-                                        >
-                                          {project.status}
-                                        </Badge>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs font-medium text-muted-foreground">Project Engineer</p>
-                                        <p className="text-sm">{project.engineer_name}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs font-medium text-muted-foreground">Time Keeper/Checker</p>
-                                        <p className="text-sm">{project.user_name}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs font-medium text-muted-foreground">Project Date</p>
-                                        <p className="text-sm">{format(new Date(project.project_date), 'PPP')}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-xs font-medium text-muted-foreground">Location</p>
-                                        <p className="text-xs font-mono">
-                                          {project.latitude.toFixed(6)}, {project.longitude.toFixed(6)}
-                                        </p>
-                                      </div>
-                                      {project.contact_phone && (
-                                        <div>
-                                          <p className="text-xs font-medium text-muted-foreground">Phone</p>
-                                          <p className="text-sm">{project.contact_phone}</p>
-                                        </div>
-                                      )}
-                                      {project.contact_email && (
-                                        <div>
-                                          <p className="text-xs font-medium text-muted-foreground">Email</p>
-                                          <p className="text-sm">{project.contact_email}</p>
-                                        </div>
-                                      )}
-                                      {project.contact_social && (
-                                        <div>
-                                          <p className="text-xs font-medium text-muted-foreground">Social Media</p>
-                                          <p className="text-sm">{project.contact_social}</p>
-                                        </div>
-                                      )}
-                                      <div className="col-span-2 md:col-span-3">
-                                        <p className="text-xs font-medium text-muted-foreground">Description</p>
-                                        <p className="text-sm mt-1">{project.description}</p>
-                                      </div>
-                                      {project.additional_details && (
-                                        <div className="col-span-2 md:col-span-3">
-                                          <p className="text-xs font-medium text-muted-foreground">Additional Details</p>
-                                          <p className="text-sm mt-1">{project.additional_details}</p>
-                                        </div>
-                                      )}
-                                      {project.image_url && (() => {
-                                        const projectImageUrls = project.image_url.split(',').filter(Boolean).map(url => url.trim());
-                                        return projectImageUrls.length > 0 && (
-                                          <div className="col-span-2 md:col-span-3">
-                                            <p className="text-xs font-medium text-muted-foreground mb-2">
-                                              Project Images ({projectImageUrls.length})
-                                            </p>
-                                            <div className={`grid gap-2 ${projectImageUrls.length === 1 ? 'grid-cols-1 max-w-md' :
-                                              projectImageUrls.length === 2 ? 'grid-cols-2' :
-                                                'grid-cols-2 md:grid-cols-3'
-                                              }`}>
-                                              {projectImageUrls.map((url, index) => (
-                                                <div
-                                                  key={index}
-                                                  className="relative group cursor-pointer"
-                                                  onClick={() => handleImageClick(projectImageUrls, index)}
-                                                >
-                                                  <img
-                                                    src={url}
-                                                    alt={`Project ${index + 1}`}
-                                                    className="w-full h-32 object-cover rounded-lg border hover:opacity-90 transition-opacity"
-                                                  />
-                                                  <div className="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-2 py-1 rounded pointer-events-none">
-                                                    {index + 1}/{projectImageUrls.length}
-                                                  </div>
-                                                  <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
-                                                    <div className="bg-white/90 px-2 py-1 rounded text-xs font-medium">
-                                                      Click to enlarge
-                                                    </div>
-                                                  </div>
-                                                </div>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        );
-                                      })()}
-                                      <div className="col-span-2 md:col-span-3">
-                                        <p className="text-xs text-muted-foreground">
-                                          Submitted: {format(new Date(project.created_at), 'PPP \'at\' p')}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </ScrollArea>
-              </div>
+                          )}
+                        </>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </ScrollArea>
             )}
           </CardContent>
         </Card>
@@ -874,7 +872,7 @@ const Dashboard = () => {
         open={showMapLockModal}
         onOpenChange={setShowMapLockModal}
       />
-    </div>
+    </div >
   );
 };
 
