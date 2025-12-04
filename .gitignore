@@ -12,6 +12,26 @@ dist
 dist-ssr
 *.local
 
+# Environment variables and sensitive credentials
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*
+!.env.example
+
+# Supabase
+.supabase/
+supabase/.env
+supabase/config.toml
+**/migrations/*.key
+**/migrations/*.pem
+
+# API Keys and Tokens
+*mapbox*.key
+*supabase*.key
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
