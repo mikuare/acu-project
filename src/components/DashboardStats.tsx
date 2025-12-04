@@ -217,7 +217,7 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
             <div className="relative h-64 md:h-80 w-full overflow-hidden rounded-lg shadow-lg bg-[#1a237e]">
                 {/* Background Image */}
                 <img
-                    src="/dashboard-hero.png"
+                    src="/dashboard-hero-new.png"
                     alt="Dashboard Hero"
                     className="absolute inset-0 w-full h-full object-cover"
                 />
