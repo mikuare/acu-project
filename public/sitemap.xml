@@ -15,13 +15,5 @@
   </url>
   
   <!-- Add more URLs here as your site grows -->
-  <!-- Example:
-  <url>
-    <loc>https://acu-project-map-dev.vercel.app/about</loc>
-    <lastmod>2025-12-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  -->
   
 </urlset>
