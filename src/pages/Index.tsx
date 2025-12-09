@@ -148,7 +148,8 @@ const Index = () => {
         p.project_id?.toLowerCase().includes(searchLower) ||
         p.description?.toLowerCase().includes(searchLower) ||
         p.province?.toLowerCase().includes(searchLower) ||
-        p.region?.toLowerCase().includes(searchLower)
+        p.region?.toLowerCase().includes(searchLower) ||
+        p.branch?.toLowerCase().includes(searchLower)
       );
     }
 

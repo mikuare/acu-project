@@ -11,7 +11,7 @@ Disallow: /.env
 Disallow: /src/
 
 # Sitemap location
-Sitemap: https://acu-project-map-dev.vercel.app/sitemap.xml
+Sitemap: https://www.qmazholdingsinc.site/sitemap.xml
 
 # Crawl delay (optional - helps prevent server overload)
 Crawl-delay: 1

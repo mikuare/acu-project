@@ -66,7 +66,7 @@ const SearchFilters = ({ onFilterChange, availableYears, viewMode, onViewModeCha
             <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
-                    placeholder="Search by name, location, project ID..."
+                    placeholder="Search by name, location, project ID, branch..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-9 w-full bg-background"

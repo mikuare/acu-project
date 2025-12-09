@@ -448,7 +448,7 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
       <ShareProjectModal
         open={shareModalOpen}
         onOpenChange={setShareModalOpen}
-        projectUrl="https://acu-project-map-dev.vercel.app/"
+        projectUrl="https://www.qmazholdingsinc.site/"
       />
     </>
   );
