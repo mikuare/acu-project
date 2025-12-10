@@ -20,6 +20,7 @@ import ForgotPassword from "./pages/admin/ForgotPassword";
 import ResetPassword from "./pages/admin/ResetPassword";
 import Dashboard from "./pages/admin/Dashboard";
 import TestEdit from "./pages/admin/TestEdit";
+import ImplementationTracker from "./pages/ImplementationTracker";
 
 const queryClient = new QueryClient();
 
@@ -45,48 +46,56 @@ const App = () => {
     <>
       {/* Update prompt OUTSIDE all providers - renders at root level with max z-index */}
       {updateInfo && <UpdatePrompt updateInfo={updateInfo} />}
-      
+
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
             <BrowserRouter>
-            <AuthProvider>
-              <UserCredentialsProvider>
-                <AppSettingsProvider>
-                  <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/admin/signin" element={<SignIn />} />
-                <Route path="/admin/signup" element={<SignUp />} />
-                <Route path="/admin/forgot-password" element={<ForgotPassword />} />
-                <Route path="/admin/reset-password" element={<ResetPassword />} />
-                <Route 
-                  path="/admin/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/test-edit" 
-                  element={
-                    <ProtectedRoute>
-                      <TestEdit />
-                    </ProtectedRoute>
-                  } 
-                />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </AppSettingsProvider>
-              </UserCredentialsProvider>
-            </AuthProvider>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+              <AuthProvider>
+                <UserCredentialsProvider>
+                  <AppSettingsProvider>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/admin/signin" element={<SignIn />} />
+                      <Route path="/admin/signup" element={<SignUp />} />
+                      <Route path="/admin/forgot-password" element={<ForgotPassword />} />
+                      <Route path="/admin/reset-password" element={<ResetPassword />} />
+                      <Route
+                        path="/admin/dashboard"
+                        element={
+                          <ProtectedRoute>
+                            <Dashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/test-edit"
+                        element={
+                          <ProtectedRoute>
+                            <TestEdit />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/implementation-tracker"
+                        element={
+                          <ProtectedRoute>
+                            <ImplementationTracker />
+                          </ProtectedRoute>
+                        }
+                      />
+                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </AppSettingsProvider>
+                </UserCredentialsProvider>
+              </AuthProvider>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
     </>
   );
 };

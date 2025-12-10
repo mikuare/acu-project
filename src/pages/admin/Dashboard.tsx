@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, Edit, Trash2, MapPin, Loader2, Eye, Search, Image as ImageIcon, Menu, X, LayoutGrid, LayoutList, RefreshCw, UserCog, Shield, Flag } from 'lucide-react';
+import { LogOut, Edit, Trash2, MapPin, Loader2, Eye, Search, Image as ImageIcon, Menu, X, LayoutGrid, LayoutList, RefreshCw, UserCog, Shield, Flag, CheckCircle } from 'lucide-react';
 import EditProjectModal from '@/components/EditProjectModal';
 import ViewProjectsModal from '@/components/ViewProjectsModal';
 import ManageUserCredentials from '@/components/ManageUserCredentials';
@@ -309,6 +309,12 @@ const Dashboard = () => {
                 <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>Map Access</span>
               </Button>
+              <Link to="/admin/implementation-tracker">
+                <Button variant="outline" size="sm" className="hidden lg:flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-7 sm:h-8">
+                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span>Implementation</span>
+                </Button>
+              </Link>
               <Link to="/">
                 <Button variant="outline" size="sm" className="h-7 w-7 sm:w-auto sm:h-8 p-0 sm:px-3 flex-shrink-0">
                   <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
