@@ -396,8 +396,11 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
                   {project.document_urls ? (
                     <div className="grid grid-cols-1 gap-3">
                       {project.document_urls.split(',').filter(Boolean).map((url, index) => {
+                        // Extract filename from URL
                         const fileName = url.split('/').pop()?.split('?')[0] || `Document ${index + 1}`;
-                        const readableName = decodeURIComponent(fileName).split('_').slice(1).join('_') || fileName;
+                        // Remove timestamp prefix (first part before underscore)
+                        // Example: "1765006351427_MyDocument.pdf" -> "MyDocument.pdf"
+                        const readableName = decodeURIComponent(fileName).replace(/^\d+_/, '') || fileName;
                         return (
                           <a
                             key={index}

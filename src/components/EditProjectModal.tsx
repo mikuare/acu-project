@@ -145,8 +145,8 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
   };
 
   const uploadFile = async (file: File, bucket: string): Promise<string | null> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+    // Preserve original filename with timestamp prefix to prevent conflicts
+    const fileName = `${Date.now()}_${file.name}`;
 
     const { data, error } = await supabase.storage
       .from(bucket)
@@ -482,9 +482,11 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
                 <div className="space-y-2 mb-2">
                   {existingDocUrls.map((url, index) => {
                     const fileName = url.split('/').pop()?.split('?')[0] || `Document ${index + 1}`;
+                    // Remove timestamp prefix to show original filename
+                    const readableName = decodeURIComponent(fileName).replace(/^\d+_/, '') || fileName;
                     return (
                       <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
-                        <span className="text-sm truncate">{decodeURIComponent(fileName)}</span>
+                        <span className="text-sm truncate">{readableName}</span>
                         <Button type="button" variant="ghost" size="sm" onClick={() => removeExistingDoc(index)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>

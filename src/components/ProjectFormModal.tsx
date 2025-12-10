@@ -333,8 +333,8 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
       // Upload all documents if provided
       if (documentFiles.length > 0) {
         for (const docFile of documentFiles) {
-          const fileExt = docFile.name.split('.').pop();
-          const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          // Preserve original filename with timestamp prefix to prevent conflicts
+          const fileName = `${Date.now()}_${docFile.name}`;
           const { error: uploadError } = await supabase.storage
             .from('project-documents')
             .upload(fileName, docFile);
