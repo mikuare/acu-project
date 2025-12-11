@@ -243,144 +243,182 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary to-background">
       {/* Header */}
-      <header className="bg-card/80 backdrop-blur-sm border-b-4 border-[#FF5722] sticky top-0 z-50 shadow-md">
-        <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
+      <header className="bg-card/80 backdrop-blur-md border-b sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 h-16">
+          <div className="flex items-center justify-between h-full gap-4">
+            {/* Branding Section */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <button
-                className="lg:hidden p-1.5 hover:bg-primary/10 rounded-lg transition-colors flex-shrink-0"
+                className="lg:hidden p-2 hover:bg-accent rounded-md transition-colors flex-shrink-0"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 aria-label="Toggle menu"
               >
-                {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
-              <img
-                src="/qmaz-logo-new.png"
-                alt="QMAZ Logo"
-                className="h-10 w-10 object-contain"
-              />
-              <div className="hidden sm:block min-w-0">
-                <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Admin Dashboard</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  Welcome, {user?.user_metadata?.full_name || user?.email}
-                </p>
-              </div>
-              <div className="sm:hidden min-w-0 flex-1">
-                <h1 className="text-sm font-bold text-foreground truncate">Admin</h1>
+
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <img
+                  src="/qmaz-logo-new.png"
+                  alt="QMAZ Logo"
+                  className="h-8 w-8 sm:h-9 sm:w-9 object-contain flex-shrink-0"
+                />
+                <div className="flex flex-col min-w-0">
+                  <h1 className="text-base sm:text-lg font-bold leading-none tracking-tight text-foreground truncate">
+                    <span className="md:hidden">Admin</span>
+                    <span className="hidden md:inline">Admin Dashboard</span>
+                  </h1>
+                  <span className="text-xs text-muted-foreground truncate hidden sm:inline-block">
+                    Welcome, {user?.user_metadata?.full_name || user?.email}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-0.5 sm:gap-2">
-              {/* Refresh Button - Mobile Only */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="md:hidden h-7 w-7 p-0 flex-shrink-0"
-                aria-label="Refresh dashboard"
-              >
-                <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-              </Button>
-              <ThemeToggle />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowViewModal(true)}
-                className="hidden sm:flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-7 sm:h-8"
-              >
-                <Search className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">View & Search Projects</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowUserCredentialsModal(true)}
-                className="hidden lg:flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-7 sm:h-8"
-              >
-                <UserCog className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>User Credentials</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowMapLockModal(true)}
-                className="hidden lg:flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-7 sm:h-8"
-              >
-                <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>Map Access</span>
-              </Button>
-              <Link to="/admin/implementation-tracker">
-                <Button variant="outline" size="sm" className="hidden lg:flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-7 sm:h-8">
-                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>Implementation</span>
+
+            {/* Actions Section */}
+            <div className="flex items-center gap-1 sm:gap-2">
+
+
+              <div className="hidden md:flex items-center gap-2 mr-2 border-r pr-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowViewModal(true)}
+                  className="gap-2"
+                >
+                  <Search className="w-4 h-4" />
+                  Search Projects
                 </Button>
-              </Link>
-              <Link to="/">
-                <Button variant="outline" size="sm" className="h-7 w-7 sm:w-auto sm:h-8 p-0 sm:px-3 flex-shrink-0">
-                  <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline sm:ml-2">View Map</span>
+
+                <Link to="/admin/implementation-tracker">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    Tracker
+                  </Button>
+                </Link>
+
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowUserCredentialsModal(true)}
+                    title="User Credentials"
+                  >
+                    <UserCog className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowMapLockModal(true)}
+                    title="Map Access"
+                  >
+                    <Shield className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Link to="/">
+                  <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    Map
+                  </Button>
+                </Link>
+                {/* Mobile Refresh */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="md:hidden flex-shrink-0"
+                  aria-label="Refresh dashboard"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </Button>
-              </Link>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={signOut}
-                className="h-7 w-7 sm:w-auto sm:h-8 p-0 sm:px-3 flex-shrink-0"
-                aria-label="Sign Out"
-              >
-                <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline sm:ml-2">Sign Out</span>
-              </Button>
+                <ThemeToggle />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={signOut}
+                  className="text-muted-foreground hover:text-destructive transition-colors"
+                  aria-label="Sign Out"
+                >
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Mobile Menu */}
+          {/* Mobile Menu Dropdown */}
           {mobileMenuOpen && (
-            <div className="lg:hidden mt-4 p-4 bg-card rounded-lg border border-border/50">
-              <div className="space-y-3">
-                <div className="text-sm text-muted-foreground">
-                  Welcome, {user?.user_metadata?.full_name || user?.email}
+            <div className="lg:hidden absolute top-16 left-0 right-0 bg-background/95 backdrop-blur-md border-b border-border shadow-lg p-4 animate-in slide-in-from-top-2">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 pb-4 border-b">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <UserCog className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-sm">Signed in as</span>
+                    <span className="text-xs text-muted-foreground">{user?.email}</span>
+                  </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setShowViewModal(true);
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full justify-start gap-2"
-                >
-                  <Search className="w-4 h-4" />
-                  View & Search Projects
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setShowUserCredentialsModal(true);
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full justify-start gap-2"
-                >
-                  <UserCog className="w-4 h-4" />
-                  Manage User Credentials
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setShowMapLockModal(true);
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full justify-start gap-2"
-                >
-                  <Shield className="w-4 h-4" />
-                  Map Access Settings
-                </Button>
+
+                <div className="grid gap-2">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3"
+                    onClick={() => {
+                      setShowViewModal(true);
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <Search className="w-4 h-4" />
+                    Search Projects
+                  </Button>
+
+                  <Link to="/admin/implementation-tracker" className="block">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-3"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Implementation Tracker
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="pb-4 border-b">
+                  <h4 className="text-xs font-medium text-muted-foreground mb-2 px-2">Settings</h4>
+                  <div className="grid gap-2">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-3"
+                      onClick={() => {
+                        setShowUserCredentialsModal(true);
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      <UserCog className="w-4 h-4" />
+                      User Credentials
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-3"
+                      onClick={() => {
+                        setShowMapLockModal(true);
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      <Shield className="w-4 h-4" />
+                      Map Access
+                    </Button>
+                  </div>
+                </div>
+
                 <Link to="/" className="block">
-                  <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                  <Button variant="default" className="w-full gap-2">
                     <MapPin className="w-4 h-4" />
-                    View Map
+                    View Main Map
                   </Button>
                 </Link>
               </div>

@@ -4,10 +4,26 @@ import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, ArrowLeft } from "lucide-react";
+import { Search, ArrowLeft, Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import ProjectListSidebar from "@/components/ProjectListSidebar";
 import { useNavigate } from "react-router-dom";
 import ImplementationMap from "@/components/ImplementationMap";
 import MarkImplementedPanel from "@/components/MarkImplementedPanel";
+import ProjectOptionsDialog from "@/components/ProjectOptionsDialog";
+import ProjectDetailsModal from "@/components/ProjectDetailsModal";
+import { MAPBOX_TOKEN } from "@/config/mapbox";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useRef } from "react";
 
 interface Project {
     id: string;
@@ -25,6 +41,7 @@ interface Project {
     region: string | null;
     province: string | null;
     created_at: string;
+    additional_details: string | null;
     // Implementation details
     completion_date?: string;
     implementation_notes?: string;
@@ -41,7 +58,24 @@ const ImplementationTracker = () => {
     const [statusFilter, setStatusFilter] = useState("all");
     const [branchFilter, setBranchFilter] = useState("all");
     const [isLoading, setIsLoading] = useState(true);
-    // ... (state)
+
+    const [showOptions, setShowOptions] = useState(false);
+    const [showDetails, setShowDetails] = useState(false);
+    const [showImplementation, setShowImplementation] = useState(false);
+    const [showVpnWarning, setShowVpnWarning] = useState(false);
+    const [showLocationError, setShowLocationError] = useState(false);
+    const [routeData, setRouteData] = useState<any>(null);
+    const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
+    const watchIdRef = useRef<number | null>(null);
+
+    // Cleanup watch on unmount
+    useEffect(() => {
+        return () => {
+            if (watchIdRef.current !== null) {
+                navigator.geolocation.clearWatch(watchIdRef.current);
+            }
+        };
+    }, []);
 
     const fetchProjects = async () => {
         try {
@@ -151,9 +185,85 @@ const ImplementationTracker = () => {
 
     const handleProjectSelect = (projectId: string) => {
         setSelectedProjectId(projectId);
+        setRouteData(null);
+        setShowOptions(true);
     };
 
+    const handleNavigate = () => {
+        if (!selectedProject) return;
+        setShowVpnWarning(true);
+    };
+
+    const startNavigation = () => {
+        setShowVpnWarning(false);
+        if (!selectedProject) return;
+        if (!MAPBOX_TOKEN) {
+            toast({ variant: "destructive", title: "Error", description: "Mapbox token not found" });
+            return;
+        }
+
+        if ("geolocation" in navigator) {
+            // 1. Initial Route Fetch
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const { latitude, longitude } = position.coords;
+                setUserLocation({ latitude, longitude });
+
+                try {
+                    const response = await fetch(
+                        `https://api.mapbox.com/directions/v5/mapbox/driving/${longitude},${latitude};${selectedProject.longitude},${selectedProject.latitude}?geometries=geojson&access_token=${MAPBOX_TOKEN}`
+                    );
+                    const data = await response.json();
+                    if (data.routes && data.routes[0]) {
+                        setRouteData(data.routes[0].geometry);
+                        toast({ title: "Route calculated", description: "Showing route to project." });
+                    }
+                } catch (error) {
+                    console.error("Error fetching route:", error);
+                    toast({ variant: "destructive", title: "Error", description: "Could not calculate route." });
+                }
+            }, (error) => {
+                console.error("Geolocation error:", error);
+                setShowLocationError(true);
+            }, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
+
+            // 2. Start Watching Position
+            if (watchIdRef.current !== null) {
+                navigator.geolocation.clearWatch(watchIdRef.current);
+            }
+
+            watchIdRef.current = navigator.geolocation.watchPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    setUserLocation({ latitude, longitude });
+                },
+                (error) => {
+                    console.error("Watch Position Error:", error);
+                    // Don't show modal repeatedly for watch errors, just toast
+                    if (error.code === 1) { // Permission Denied
+                        toast({ variant: "destructive", title: "Location Access Denied", description: "Please enable location services." });
+                    }
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 5000
+                }
+            );
+
+            toast({ title: "Live Tracking Started", description: "Your location will update as you move." });
+
+        } else {
+            toast({ variant: "destructive", title: "Error", description: "Geolocation not supported." });
+        }
+    };
+
+
     const handleSuccess = () => {
+        setShowImplementation(false);
         setSelectedProjectId(null);
         fetchProjects();
         toast({
@@ -171,112 +281,70 @@ const ImplementationTracker = () => {
     return (
         <div className="h-screen flex flex-col bg-background">
             {/* Header */}
-            <header className="bg-card border-b-4 border-[#FF5722] py-3 px-4 flex items-center gap-4 shrink-0">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate('/admin/dashboard')}
-                    className="shrink-0"
-                >
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <div className="flex-1">
-                    <h1 className="text-xl font-bold">Project Inventory Implementation - Mobile App UI</h1>
-                    <p className="text-xs text-muted-foreground">Mark projects as implemented with verification</p>
+            <header className="bg-card border-b-4 border-[#FF5722] py-2 sm:py-3 px-3 sm:px-4 flex items-center gap-2 sm:gap-4 shrink-0 z-20 shadow-sm relative">
+                <div className="flex items-center gap-1 sm:gap-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate('/admin/dashboard')}
+                        className="shrink-0 h-8 w-8 sm:h-10 sm:w-10"
+                    >
+                        <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </Button>
+
+                    {/* Mobile Sidebar Trigger (Moved to Header) */}
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="md:hidden shrink-0 h-8 w-8"
+                            >
+                                <Menu className="h-4 w-4" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="p-0 h-full w-full max-w-full sm:w-80 pt-safe-top z-[100]">
+                            <ProjectListSidebar
+                                projects={projects}
+                                filteredProjects={filteredProjects}
+                                selectedProjectId={selectedProjectId}
+                                onSelect={(id) => {
+                                    handleProjectSelect(id);
+                                }}
+                                searchQuery={searchQuery}
+                                setSearchQuery={setSearchQuery}
+                                statusFilter={statusFilter}
+                                setStatusFilter={setStatusFilter}
+                                branchFilter={branchFilter}
+                                setBranchFilter={setBranchFilter}
+                                isLoading={isLoading}
+                            />
+                        </SheetContent>
+                    </Sheet>
+                </div>
+
+                <div className="flex-1 min-w-0">
+                    <h1 className="text-base sm:text-xl font-bold truncate">Project Implementation</h1>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate hidden sm:block">Mark projects as implemented with verification</p>
                 </div>
             </header>
 
-            <div className="flex-1 flex overflow-hidden">
-                {/* Sidebar */}
-                <aside className="w-80 bg-card border-r flex flex-col overflow-hidden">
-                    {/* Search and Filters */}
-                    <div className="p-4 space-y-3 border-b">
-                        {/* Search */}
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                            <Input
-                                placeholder="Search by ID, description..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9"
-                            />
-                        </div>
-
-                        {/* Filters */}
-                        <div className="grid grid-cols-2 gap-2">
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger className="h-9">
-                                    <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Status</SelectItem>
-                                    <SelectItem value="ongoing">Ongoing</SelectItem>
-                                    <SelectItem value="implemented">Implemented</SelectItem>
-                                </SelectContent>
-                            </Select>
-
-                            <Select value={branchFilter} onValueChange={setBranchFilter}>
-                                <SelectTrigger className="h-9">
-                                    <SelectValue placeholder="Branch" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Branches</SelectItem>
-                                    <SelectItem value="ADC">ADC</SelectItem>
-                                    <SelectItem value="QGDC">QGDC</SelectItem>
-                                    <SelectItem value="QMB">QMB</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {/* Results count */}
-                        <div className="text-xs text-muted-foreground">
-                            {filteredProjects.length} of {projects.length} projects
-                        </div>
-                    </div>
-
-                    {/* Project List */}
-                    <div className="flex-1 overflow-y-auto p-2">
-                        {isLoading ? (
-                            <div className="text-center py-8 text-muted-foreground text-sm">
-                                Loading projects...
-                            </div>
-                        ) : filteredProjects.length === 0 ? (
-                            <div className="text-center py-8 text-muted-foreground text-sm">
-                                No projects found
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {filteredProjects.map((project) => (
-                                    <button
-                                        key={project.id}
-                                        onClick={() => handleProjectSelect(project.id)}
-                                        className={`w-full text-left p-3 rounded-lg border transition-all ${selectedProjectId === project.id
-                                            ? 'bg-[#FF5722]/10 border-[#FF5722]'
-                                            : 'bg-card hover:bg-muted border-border'
-                                            }`}
-                                    >
-                                        <div className="flex items-start justify-between gap-2 mb-1">
-                                            <span className="font-semibold text-sm truncate">{project.project_id}</span>
-                                            <span className={`text-xs px-2 py-0.5 rounded ${branchColors[project.branch]}`}>
-                                                {project.branch}
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
-                                            {project.description}
-                                        </p>
-                                        <div className="flex items-center gap-2 text-xs">
-                                            <span className={`px-2 py-0.5 rounded ${project.status === 'implemented'
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-orange-100 text-orange-700'
-                                                }`}>
-                                                {project.status}
-                                            </span>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+            <div className="flex-1 flex overflow-hidden relative">
+                {/* Desktop Sidebar */}
+                <aside className="hidden md:flex w-80 bg-card border-r flex-col overflow-hidden z-10">
+                    <ProjectListSidebar
+                        projects={projects}
+                        filteredProjects={filteredProjects}
+                        selectedProjectId={selectedProjectId}
+                        onSelect={handleProjectSelect}
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        statusFilter={statusFilter}
+                        setStatusFilter={setStatusFilter}
+                        branchFilter={branchFilter}
+                        setBranchFilter={setBranchFilter}
+                        isLoading={isLoading}
+                    />
                 </aside>
 
                 {/* Map */}
@@ -285,18 +353,71 @@ const ImplementationTracker = () => {
                         projects={filteredProjects}
                         selectedProjectId={selectedProjectId}
                         onProjectSelect={handleProjectSelect}
+                        route={routeData}
+                        userLocation={userLocation}
                     />
                 </main>
-            </div>
 
-            {/* Mark Implemented Panel */}
-            {selectedProject && (
-                <MarkImplementedPanel
+                {/* Mark Implemented Panel */}
+                {selectedProject && showImplementation && (
+                    <MarkImplementedPanel
+                        project={selectedProject}
+                        onSuccess={handleSuccess}
+                        onCancel={() => setShowImplementation(false)}
+                    />
+                )}
+
+                <ProjectOptionsDialog
+                    open={showOptions}
+                    onClose={() => setShowOptions(false)}
                     project={selectedProject}
-                    onSuccess={handleSuccess}
-                    onCancel={() => setSelectedProjectId(null)}
+                    onNavigate={handleNavigate}
+                    onViewDetails={() => setShowDetails(true)}
+                    onMarkImplemented={() => setShowImplementation(true)}
                 />
-            )}
+
+                <ProjectDetailsModal
+                    open={showDetails}
+                    onOpenChange={setShowDetails}
+                    project={selectedProject as any}
+                />
+
+                <AlertDialog open={showVpnWarning} onOpenChange={setShowVpnWarning}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>⚠️ Check Your Connection</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                To ensure accurate GPS tracking, please turn off any VPN services before proceeding.
+                                VPNs can cause incorrect location readings.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={startNavigation} className="bg-[#FF5722] hover:bg-[#E64A19]">
+                                Continue & Start Tracking
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                <AlertDialog open={showLocationError} onOpenChange={setShowLocationError}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>📍 Location Services Required</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                We cannot detect your location. Please turn on <b>Location Services (GPS)</b> on your device to use navigation.
+                                <br /><br />
+                                Check your browser permissions or device settings.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogAction onClick={() => setShowLocationError(false)} className="bg-[#FF5722]">
+                                OK, I'll turn it on
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
         </div>
     );
 };

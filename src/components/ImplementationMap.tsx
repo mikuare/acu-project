@@ -1,6 +1,6 @@
 import { date } from "zod";
 import { useRef, useEffect } from 'react';
-import Map, { Marker, NavigationControl } from 'react-map-gl';
+import Map, { Marker, NavigationControl, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MAPBOX_TOKEN } from '@/config/mapbox';
 
@@ -104,9 +104,11 @@ interface ImplementationMapProps {
     projects: Project[];
     selectedProjectId: string | null;
     onProjectSelect: (projectId: string) => void;
+    route?: any;
+    userLocation?: { latitude: number; longitude: number } | null;
 }
 
-const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect }: ImplementationMapProps) => {
+const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route, userLocation }: ImplementationMapProps) => {
     const mapRef = useRef<any>(null);
 
     // Fly to selected project
@@ -150,6 +152,35 @@ const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect }: Imp
             >
                 {/* Navigation Controls */}
                 <NavigationControl position="top-right" />
+
+                {/* User Location Marker */}
+                {userLocation && (
+                    <Marker longitude={userLocation.longitude} latitude={userLocation.latitude}>
+                        <div className="relative flex items-center justify-center w-6 h-6">
+                            <div className="absolute w-full h-full bg-blue-500 rounded-full opacity-30 animate-ping" />
+                            <div className="relative w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-md" />
+                        </div>
+                    </Marker>
+                )}
+
+                {/* Route Line */}
+                {route && (
+                    <Source id="route" type="geojson" data={route}>
+                        <Layer
+                            id="route-layer"
+                            type="line"
+                            layout={{
+                                "line-join": "round",
+                                "line-cap": "round"
+                            }}
+                            paint={{
+                                "line-color": "#3b82f6",
+                                "line-width": 5,
+                                "line-opacity": 0.8
+                            }}
+                        />
+                    </Source>
+                )}
 
                 {/* Project Markers */}
                 {projects.map((project) => (
