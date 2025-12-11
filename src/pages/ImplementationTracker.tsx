@@ -44,6 +44,7 @@ interface Project {
     additional_details: string | null;
     // Implementation details
     completion_date?: string;
+    timekeeper_name?: string;
     implementation_notes?: string;
     verification_images?: string;
     verification_documents?: string;
@@ -57,6 +58,7 @@ const ImplementationTracker = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [branchFilter, setBranchFilter] = useState("all");
+    const [sortBy, setSortBy] = useState("date-newest");
     const [isLoading, setIsLoading] = useState(true);
 
     const [showOptions, setShowOptions] = useState(false);
@@ -110,6 +112,7 @@ const ImplementationTracker = () => {
                     ...p,
                     status: impl ? impl.status : p.status,
                     completion_date: impl?.completion_date,
+                    timekeeper_name: impl?.timekeeper_name,
                     implementation_notes: impl?.implementation_notes,
                     verification_images: impl?.verification_images,
                     verification_documents: impl?.verification_documents
@@ -176,8 +179,24 @@ const ImplementationTracker = () => {
             result = result.filter(p => p.branch === branchFilter);
         }
 
+        // Sorting
+        result.sort((a, b) => {
+            switch (sortBy) {
+                case 'date-newest':
+                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                case 'date-oldest':
+                    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                case 'id-asc':
+                    return (a.project_id || '').localeCompare(b.project_id || '');
+                case 'id-desc':
+                    return (b.project_id || '').localeCompare(a.project_id || '');
+                default:
+                    return 0;
+            }
+        });
+
         setFilteredProjects(result);
-    }, [searchQuery, statusFilter, branchFilter, projects]);
+    }, [searchQuery, statusFilter, branchFilter, projects, sortBy]);
 
     const selectedProject = selectedProjectId
         ? projects.find(p => p.id === selectedProjectId) || null
@@ -317,6 +336,8 @@ const ImplementationTracker = () => {
                                 setStatusFilter={setStatusFilter}
                                 branchFilter={branchFilter}
                                 setBranchFilter={setBranchFilter}
+                                sortBy={sortBy}
+                                setSortBy={setSortBy}
                                 isLoading={isLoading}
                             />
                         </SheetContent>
@@ -343,6 +364,8 @@ const ImplementationTracker = () => {
                         setStatusFilter={setStatusFilter}
                         branchFilter={branchFilter}
                         setBranchFilter={setBranchFilter}
+                        sortBy={sortBy}
+                        setSortBy={setSortBy}
                         isLoading={isLoading}
                     />
                 </aside>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Map, { Marker, NavigationControl, FullscreenControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -8,6 +8,7 @@ import ProjectFormModal from './ProjectFormModal';
 import SearchPlaceModal from './SearchPlaceModal';
 import LocationConfirmModal from './LocationConfirmModal';
 import ProjectDetailsModal from './ProjectDetailsModal';
+import ProjectClusterModal from './ProjectClusterModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useUserCredentials } from '@/contexts/UserCredentialsContext';
@@ -30,33 +31,44 @@ const branchColors = {
   QMB: '#DC2626',    // Bright Red
 };
 
-// Custom pin marker component
-const CustomMarker = ({ color, size = 40 }: { color: string; size?: number }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 36"
-    style={{
-      cursor: 'pointer',
-      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-    }}
-  >
-    {/* Pin shape */}
-    <path
-      d="M12 0C7.03 0 3 4.03 3 9c0 6.5 9 18 9 18s9-11.5 9-18c0-4.97-4.03-9-9-9z"
-      fill={color}
-      stroke="white"
-      strokeWidth="1.5"
-    />
-    {/* Inner circle/dot */}
-    <circle
-      cx="12"
-      cy="9"
-      r="4"
-      fill="white"
-      opacity="0.9"
-    />
-  </svg>
+// Custom pin marker component with count badge
+const CustomMarker = ({ color, size = 40, count = 1 }: { color: string; size?: number; count?: number }) => (
+  <div className="relative">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 36"
+      style={{
+        cursor: 'pointer',
+        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+      }}
+    >
+      {/* Pin shape */}
+      <path
+        d="M12 0C7.03 0 3 4.03 3 9c0 6.5 9 18 9 18s9-11.5 9-18c0-4.97-4.03-9-9-9z"
+        fill={color}
+        stroke="white"
+        strokeWidth="1.5"
+      />
+      {/* Inner circle/dot */}
+      <circle
+        cx="12"
+        cy="9"
+        r="4"
+        fill="white"
+        opacity="0.9"
+      />
+    </svg>
+    {/* Count Badge */}
+    {count > 1 && (
+      <div
+        className="absolute -top-1 -right-1 bg-[#FF5722] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white shadow-md"
+        style={{ fontSize: '10px' }}
+      >
+        {count}
+      </div>
+    )}
+  </div>
 );
 
 interface PhilippinesMapMapboxProps {
@@ -79,7 +91,9 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showLocationConfirm, setShowLocationConfirm] = useState(false);
   const [showProjectDetails, setShowProjectDetails] = useState(false);
+  const [showClusterModal, setShowClusterModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [clusterProjects, setClusterProjects] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; name?: string } | null>(null);
   const [isPinMode, setIsPinMode] = useState(false);
   const [tempMarker, setTempMarker] = useState<{ longitude: number; latitude: number } | null>(null);
@@ -88,6 +102,25 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
   const [viewState, setViewState] = useState(PHILIPPINES_CENTER);
   const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/streets-v12');
   const prevSelectedIdRef = useRef<string | null>(null);
+
+  // Group projects by coordinates (rounded to 6 decimals to handle minor GPS variations)
+  const projectClusters = useMemo(() => {
+    const clusters: globalThis.Map<string, any[]> = new globalThis.Map();
+
+    projects.forEach(project => {
+      // Round coordinates to 6 decimal places to group nearby projects
+      const key = `${project.latitude.toFixed(6)},${project.longitude.toFixed(6)}`;
+      if (!clusters.has(key)) {
+        clusters.set(key, []);
+      }
+      const existing = clusters.get(key);
+      if (existing) {
+        existing.push(project);
+      }
+    });
+
+    return clusters;
+  }, [projects]);
 
   // Fly to selected project when selectedProjectId changes
   useEffect(() => {
@@ -537,23 +570,44 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
         <NavigationControl position="top-left" />
         <FullscreenControl position="top-left" />
 
-        {/* Project Markers */}
-        {projects.map((project) => (
-          <Marker
-            key={project.id}
-            longitude={project.longitude}
-            latitude={project.latitude}
-            anchor="bottom"
-            onClick={(e) => {
-              e.originalEvent.stopPropagation();
-              if (onProjectSelect) {
-                onProjectSelect(project);
-              }
-            }}
-          >
-            <CustomMarker color={branchColors[project.branch as keyof typeof branchColors]} />
-          </Marker>
-        ))}
+        {/* Clustered Project Markers */}
+        {Array.from(projectClusters.entries()).map(([clusterKey, projectsAtLocation]) => {
+          const firstProject = projectsAtLocation[0];
+          const isCluster = projectsAtLocation.length > 1;
+
+          // Determine color - use first project's branch color, or mixed if different branches
+          const branches = [...new Set(projectsAtLocation.map(p => p.branch))];
+          const color = branches.length === 1
+            ? branchColors[branches[0] as keyof typeof branchColors]
+            : '#9333ea'; // Purple for mixed branches
+
+          return (
+            <Marker
+              key={clusterKey}
+              longitude={firstProject.longitude}
+              latitude={firstProject.latitude}
+              anchor="bottom"
+              onClick={(e) => {
+                e.originalEvent.stopPropagation();
+                if (projectsAtLocation.length === 1) {
+                  // Single project - select it directly
+                  if (onProjectSelect) {
+                    onProjectSelect(firstProject);
+                  }
+                } else {
+                  // Multiple projects - show cluster modal
+                  setClusterProjects(projectsAtLocation);
+                  setShowClusterModal(true);
+                }
+              }}
+            >
+              <CustomMarker
+                color={color}
+                count={projectsAtLocation.length}
+              />
+            </Marker>
+          );
+        })}
 
         {/* Temporary Marker (for pin mode and search) */}
         {tempMarker && (
@@ -622,6 +676,18 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
         open={showProjectDetails}
         onOpenChange={setShowProjectDetails}
         project={selectedProject}
+      />
+
+      <ProjectClusterModal
+        open={showClusterModal}
+        onOpenChange={setShowClusterModal}
+        projects={clusterProjects}
+        onProjectSelect={(project) => {
+          setShowClusterModal(false);
+          if (onProjectSelect) {
+            onProjectSelect(project);
+          }
+        }}
       />
     </div>
   );

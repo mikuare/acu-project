@@ -24,6 +24,7 @@ interface Project {
     implementation_notes?: string;
     verification_images?: string;
     verification_documents?: string;
+    timekeeper_name?: string;
 }
 
 interface MarkImplementedPanelProps {
@@ -42,6 +43,7 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
     const [completionDate, setCompletionDate] = useState(
         project?.completion_date || new Date().toISOString().split('T')[0]
     );
+    const [timekeeperName, setTimekeeperName] = useState(project?.timekeeper_name || "");
     const [notes, setNotes] = useState(project?.implementation_notes || "");
     const [status, setStatus] = useState(project?.status || 'ongoing');
     const [keptImages, setKeptImages] = useState<string[]>(project?.verification_images ? project.verification_images.split(',') : []);
@@ -131,6 +133,7 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                     project_id: project.id,
                     status: status,
                     completion_date: completionDate,
+                    timekeeper_name: timekeeperName,
                     implementation_notes: notes,
                     verification_images: finalImages.length > 0 ? (finalImages.join(',') as string) : null,
                     verification_documents: finalDocs.length > 0 ? (finalDocs.join(',') as string) : null,
@@ -197,35 +200,80 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                     {/* Completion Date */}
                     <div className="space-y-2">
                         <Label htmlFor="completionDate">Completion Date *</Label>
-                        <Input
-                            id="completionDate"
-                            type="date"
-                            value={completionDate}
-                            onChange={(e) => setCompletionDate(e.target.value)}
-                            disabled={!isEditing}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            Auto-filled to today. You can change if needed.
-                        </p>
+                        {isEditing ? (
+                            <>
+                                <Input
+                                    id="completionDate"
+                                    type="date"
+                                    value={completionDate}
+                                    onChange={(e) => setCompletionDate(e.target.value)}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Auto-filled to today. You can change if needed.
+                                </p>
+                            </>
+                        ) : (
+                            <div className="p-3 bg-muted rounded-md">
+                                <p className="font-medium">
+                                    {completionDate ? new Date(completionDate).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    }) : 'Not set'}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Time Keeper / Checker Name */}
+                    <div className="space-y-2">
+                        <Label htmlFor="timekeeperName">Time Keeper / Checker Name *</Label>
+                        {isEditing ? (
+                            <>
+                                <Input
+                                    id="timekeeperName"
+                                    type="text"
+                                    value={timekeeperName}
+                                    onChange={(e) => setTimekeeperName(e.target.value)}
+                                    placeholder="Enter the name of the time keeper/checker"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Name of the person who verified this implementation.
+                                </p>
+                            </>
+                        ) : (
+                            <div className="p-3 bg-muted rounded-md">
+                                <p className="font-medium">
+                                    {timekeeperName || <span className="text-muted-foreground">Not specified</span>}
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Implementation Notes */}
                     <div className="space-y-2">
-                        <Label htmlFor="notes">Implementation Notes (Optional)</Label>
-                        <Textarea
-                            id="notes"
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Add any notes about the implementation..."
-                            rows={3}
-                            disabled={!isEditing}
-                        />
+                        <Label htmlFor="notes">Implementation Notes {isEditing && '(Optional)'}</Label>
+                        {isEditing ? (
+                            <Textarea
+                                id="notes"
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="Add any notes about the implementation..."
+                                rows={3}
+                            />
+                        ) : (
+                            <div className="p-3 bg-muted rounded-md min-h-[80px]">
+                                <p className="whitespace-pre-wrap">
+                                    {notes || <span className="text-muted-foreground italic">No notes added</span>}
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Existing Verification Images */}
                     {keptImages.length > 0 && (
                         <div className="space-y-2">
-                            <Label>Existing Images</Label>
+                            <Label>{isEditing ? 'Existing Images' : 'Verification Images'}</Label>
                             <div className="grid grid-cols-3 gap-2">
                                 {keptImages.map((url, i) => (
                                     <div key={i} className="relative group aspect-video">
@@ -265,7 +313,7 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                     {/* Verification Images */}
                     {isEditing && (
                         <div className="space-y-2">
-                            <Label>Add New Images</Label>
+                            <Label>Attach Image (documentation)</Label>
                             {verificationImages.length > 0 && (
                                 <div className="grid grid-cols-3 gap-2 mb-2">
                                     {verificationImages.map((file, index) => (
@@ -301,7 +349,7 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                     {/* Existing Verification Documents */}
                     {keptDocs.length > 0 && (
                         <div className="space-y-2">
-                            <Label>Existing Documents</Label>
+                            <Label>{isEditing ? 'Existing Documents' : 'Verification Documents'}</Label>
                             <div className="flex flex-wrap gap-2">
                                 {keptDocs.map((url, i) => (
                                     <div key={i} className="relative group flex items-center bg-muted rounded pr-2">
@@ -334,7 +382,7 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                     {/* Verification Documents */}
                     {isEditing && (
                         <div className="space-y-2">
-                            <Label>Add New Documents</Label>
+                            <Label>Attach Files Documents (PDF, Word, Excel)</Label>
                             {verificationDocs.length > 0 && (
                                 <div className="space-y-1 mb-2">
                                     {verificationDocs.map((file, index) => (
@@ -374,7 +422,7 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                     {isEditing ? (
                         <Button
                             onClick={handleSubmit}
-                            disabled={isSubmitting || !completionDate}
+                            disabled={isSubmitting || !completionDate || !timekeeperName}
                             className="bg-green-600 hover:bg-green-700"
                         >
                             {isSubmitting ? (

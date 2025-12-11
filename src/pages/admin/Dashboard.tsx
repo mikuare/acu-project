@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { LogOut, Edit, Trash2, MapPin, Loader2, Eye, Search, Image as ImageIcon, Menu, X, LayoutGrid, LayoutList, RefreshCw, UserCog, Shield, Flag, CheckCircle } from 'lucide-react';
 import EditProjectModal from '@/components/EditProjectModal';
 import ViewProjectsModal from '@/components/ViewProjectsModal';
@@ -66,6 +67,19 @@ const Dashboard = () => {
   const [showUserCredentialsModal, setShowUserCredentialsModal] = useState(false);
   const [showMapLockModal, setShowMapLockModal] = useState(false);
   const [pendingReportCount, setPendingReportCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredProjects = projects.filter(project => {
+    if (!searchQuery) return true;
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      project.project_id.toLowerCase().includes(searchLower) ||
+      project.description.toLowerCase().includes(searchLower) ||
+      project.branch.toLowerCase().includes(searchLower) ||
+      (project.province && project.province.toLowerCase().includes(searchLower)) ||
+      (project.region && project.region.toLowerCase().includes(searchLower))
+    );
+  });
 
   const loadProjects = async () => {
     setLoading(true);
@@ -473,6 +487,17 @@ const Dashboard = () => {
                 </Button>
               </div>
             </div>
+            <div className="mt-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by Branch, Project ID, Location or Description..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -481,7 +506,7 @@ const Dashboard = () => {
               </div>
             ) : viewMode === 'reports' ? (
               <ReportList />
-            ) : projects.length === 0 ? (
+            ) : filteredProjects.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <p>No projects found</p>
               </div>
@@ -489,7 +514,7 @@ const Dashboard = () => {
               /* Card View for Mobile */
               <ScrollArea className="h-[600px]">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {projects.map((project) => (
+                  {filteredProjects.map((project) => (
                     <Card key={project.id} className="hover:shadow-lg transition-shadow">
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
@@ -643,7 +668,7 @@ const Dashboard = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {projects.map((project) => (
+                      {filteredProjects.map((project) => (
                         <>
                           <TableRow
                             key={project.id}

@@ -1,8 +1,9 @@
 import { date } from "zod";
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import Map, { Marker, NavigationControl, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MAPBOX_TOKEN } from '@/config/mapbox';
+import ProjectClusterModal from './ProjectClusterModal';
 
 // Philippines center coordinates
 const PHILIPPINES_CENTER = {
@@ -29,65 +30,78 @@ const CustomMarker = ({
     color,
     size = 40,
     isImplemented = false,
-    isSelected = false
+    isSelected = false,
+    count = 1
 }: {
     color: string;
     size?: number;
     isImplemented?: boolean;
     isSelected?: boolean;
+    count?: number;
 }) => (
-    <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 36"
-        style={{
-            cursor: 'pointer',
-            filter: isSelected ? 'drop-shadow(0 4px 8px rgba(255,87,34,0.6))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-            transform: isSelected ? 'scale(1.2)' : 'scale(1)',
-            transition: 'all 0.3s ease',
-        }}
-        className={isSelected ? 'animate-pulse' : ''}
-    >
-        <style>
-            {`
-                @keyframes drawCheck {
-                    from { stroke-dashoffset: 20; opacity: 0; }
-                    to { stroke-dashoffset: 0; opacity: 1; }
-                }
-            `}
-        </style>
-        {/* Pin shape */}
-        <path
-            d="M12 0C7.03 0 3 4.03 3 9c0 6.5 9 18 9 18s9-11.5 9-18c0-4.97-4.03-9-9-9z"
-            fill={isImplemented ? statusColors.implemented : (isSelected ? '#FF5722' : color)}
-            stroke="white"
-            strokeWidth="1.5"
-        />
-        {/* Inner content */}
-        {isImplemented ? (
+    <div className="relative">
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 36"
+            style={{
+                cursor: 'pointer',
+                filter: isSelected ? 'drop-shadow(0 4px 8px rgba(255,87,34,0.6))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                transform: isSelected ? 'scale(1.2)' : 'scale(1)',
+                transition: 'all 0.3s ease',
+            }}
+            className={isSelected ? 'animate-pulse' : ''}
+        >
+            <style>
+                {`
+                    @keyframes drawCheck {
+                        from { stroke-dashoffset: 20; opacity: 0; }
+                        to { stroke-dashoffset: 0; opacity: 1; }
+                    }
+                `}
+            </style>
+            {/* Pin shape */}
             <path
-                d="M 8 9 L 11 12 L 16 7"
+                d="M12 0C7.03 0 3 4.03 3 9c0 6.5 9 18 9 18s9-11.5 9-18c0-4.97-4.03-9-9-9z"
+                fill={isImplemented ? statusColors.implemented : (isSelected ? '#FF5722' : color)}
                 stroke="white"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-                style={{
-                    strokeDasharray: 20,
-                    strokeDashoffset: 20,
-                    animation: 'drawCheck 0.6s ease-out forwards 0.2s'
-                }}
+                strokeWidth="1.5"
             />
-        ) : (
-            <circle
-                cx="12"
-                cy="9"
-                r="3"
-                fill="white"
-                opacity="0.8"
-            />
+            {/* Inner content */}
+            {isImplemented ? (
+                <path
+                    d="M 8 9 L 11 12 L 16 7"
+                    stroke="white"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                    style={{
+                        strokeDasharray: 20,
+                        strokeDashoffset: 20,
+                        animation: 'drawCheck 0.6s ease-out forwards 0.2s'
+                    }}
+                />
+            ) : (
+                <circle
+                    cx="12"
+                    cy="9"
+                    r="3"
+                    fill="white"
+                    opacity="0.8"
+                />
+            )}
+        </svg>
+        {/* Count Badge */}
+        {count > 1 && (
+            <div
+                className="absolute -top-1 -right-1 bg-[#FF5722] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white shadow-md"
+                style={{ fontSize: '10px' }}
+            >
+                {count}
+            </div>
         )}
-    </svg>
+    </div>
 );
 
 interface Project {
@@ -110,6 +124,27 @@ interface ImplementationMapProps {
 
 const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route, userLocation }: ImplementationMapProps) => {
     const mapRef = useRef<any>(null);
+    const [showClusterModal, setShowClusterModal] = useState(false);
+    const [clusterProjects, setClusterProjects] = useState<Project[]>([]);
+
+    // Group projects by coordinates (rounded to 6 decimals to handle minor GPS variations)
+    const projectClusters = useMemo(() => {
+        const clusters: globalThis.Map<string, Project[]> = new globalThis.Map();
+
+        projects.forEach(project => {
+            // Round coordinates to 6 decimal places to group nearby projects
+            const key = `${project.latitude.toFixed(6)},${project.longitude.toFixed(6)}`;
+            if (!clusters.has(key)) {
+                clusters.set(key, []);
+            }
+            const existing = clusters.get(key);
+            if (existing) {
+                existing.push(project);
+            }
+        });
+
+        return clusters;
+    }, [projects]);
 
     // Fly to selected project
     useEffect(() => {
@@ -124,6 +159,21 @@ const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route
             }
         }
     }, [selectedProjectId, projects]);
+
+    const handleMarkerClick = (clusterKey: string, projectsAtLocation: Project[]) => {
+        if (projectsAtLocation.length === 1) {
+            // Single project - select it directly
+            onProjectSelect(projectsAtLocation[0].id);
+        } else {
+            // Multiple projects - show cluster modal
+            setClusterProjects(projectsAtLocation);
+            setShowClusterModal(true);
+        }
+    };
+
+    const handleClusterProjectSelect = (project: Project) => {
+        onProjectSelect(project.id);
+    };
 
     if (!MAPBOX_TOKEN) {
         return (
@@ -182,26 +232,53 @@ const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route
                     </Source>
                 )}
 
-                {/* Project Markers */}
-                {projects.map((project) => (
-                    <Marker
-                        key={project.id}
-                        longitude={project.longitude}
-                        latitude={project.latitude}
-                        anchor="bottom"
-                        onClick={(e) => {
-                            e.originalEvent.stopPropagation();
-                            onProjectSelect(project.id);
-                        }}
-                    >
-                        <CustomMarker
-                            color={branchColors[project.branch]}
-                            isImplemented={project.status === 'implemented'}
-                            isSelected={project.id === selectedProjectId}
-                        />
-                    </Marker>
-                ))}
+                {/* Clustered Project Markers */}
+                {Array.from(projectClusters.entries()).map(([clusterKey, projectsAtLocation]) => {
+                    const firstProject = projectsAtLocation[0];
+                    const isCluster = projectsAtLocation.length > 1;
+
+                    // Determine color - use first project's branch color, or mixed if different branches
+                    const branches = [...new Set(projectsAtLocation.map(p => p.branch))];
+                    const color = branches.length === 1
+                        ? branchColors[branches[0]]
+                        : '#9333ea'; // Purple for mixed branches
+
+                    // Check if any project in cluster is implemented
+                    const hasImplemented = projectsAtLocation.some(p => p.status === 'implemented');
+                    const allImplemented = projectsAtLocation.every(p => p.status === 'implemented');
+
+                    // Check if any project in cluster is selected
+                    const isSelected = projectsAtLocation.some(p => p.id === selectedProjectId);
+
+                    return (
+                        <Marker
+                            key={clusterKey}
+                            longitude={firstProject.longitude}
+                            latitude={firstProject.latitude}
+                            anchor="bottom"
+                            onClick={(e) => {
+                                e.originalEvent.stopPropagation();
+                                handleMarkerClick(clusterKey, projectsAtLocation);
+                            }}
+                        >
+                            <CustomMarker
+                                color={color}
+                                isImplemented={allImplemented}
+                                isSelected={isSelected}
+                                count={projectsAtLocation.length}
+                            />
+                        </Marker>
+                    );
+                })}
             </Map>
+
+            {/* Cluster Modal */}
+            <ProjectClusterModal
+                open={showClusterModal}
+                onOpenChange={setShowClusterModal}
+                projects={clusterProjects}
+                onProjectSelect={handleClusterProjectSelect}
+            />
         </div>
     );
 };

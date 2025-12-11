@@ -25,6 +25,8 @@ interface ProjectListSidebarProps {
     setStatusFilter: (val: string) => void;
     branchFilter: string;
     setBranchFilter: (val: string) => void;
+    sortBy: string;
+    setSortBy: (val: string) => void;
     isLoading: boolean;
 }
 
@@ -45,6 +47,8 @@ const ProjectListSidebar = ({
     setStatusFilter,
     branchFilter,
     setBranchFilter,
+    sortBy,
+    setSortBy,
     isLoading
 }: ProjectListSidebarProps) => {
     return (
@@ -88,6 +92,19 @@ const ProjectListSidebar = ({
                             </SelectContent>
                         </Select>
                     </div>
+
+                    {/* Sort */}
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger className="h-9 w-full">
+                            <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="date-newest">Date (Newest First)</SelectItem>
+                            <SelectItem value="date-oldest">Date (Oldest First)</SelectItem>
+                            <SelectItem value="id-asc">Project ID (A-Z)</SelectItem>
+                            <SelectItem value="id-desc">Project ID (Z-A)</SelectItem>
+                        </SelectContent>
+                    </Select>
 
                     {/* Results count */}
                     <div className="text-xs text-muted-foreground text-left">

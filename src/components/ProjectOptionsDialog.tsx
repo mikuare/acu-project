@@ -82,8 +82,8 @@ const ProjectOptionsDialog = ({
                             <CheckCircle className="w-6 h-6" />
                         </div>
                         <div className="flex flex-col items-start gap-0.5">
-                            <span className="font-semibold">{project.status === 'implemented' ? 'Update Status' : 'Mark Implemented'}</span>
-                            <span className="text-xs text-muted-foreground font-normal">Manage implementation status</span>
+                            <span className="font-semibold">{project.status === 'implemented' ? 'View Implementation Infos' : 'Mark Implemented'}</span>
+                            <span className="text-xs text-muted-foreground font-normal">View and Manage implementation</span>
                         </div>
                     </Button>
                 </div>
