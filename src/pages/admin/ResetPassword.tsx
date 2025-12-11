@@ -27,7 +27,7 @@ const ResetPassword = () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
       const type = hashParams.get('type');
-      
+
       if (accessToken && type === 'recovery') {
         setIsValidToken(true);
       } else {
@@ -49,7 +49,7 @@ const ResetPassword = () => {
     const hasUpperCase = /[A-Z]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
-    
+
     return {
       minLength,
       hasUpperCase,
@@ -64,7 +64,7 @@ const ResetPassword = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newPassword || !confirmPassword) {
       toast({
         title: "⚠️ Missing Fields",
@@ -124,7 +124,7 @@ const ResetPassword = () => {
           <ArrowLeft className="w-4 h-4" />
           Back to Sign In
         </Link>
-        
+
         <Card className="shadow-2xl">
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-center mb-4">
@@ -137,14 +137,14 @@ const ResetPassword = () => {
               Enter your new password below
             </CardDescription>
           </CardHeader>
-          
+
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               {/* New Password Field */}
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="newPassword"
                     type={showNewPassword ? "text" : "password"}
@@ -157,7 +157,7 @@ const ResetPassword = () => {
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -217,7 +217,7 @@ const ResetPassword = () => {
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
@@ -230,7 +230,7 @@ const ResetPassword = () => {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -254,14 +254,14 @@ const ResetPassword = () => {
             </CardContent>
 
             <CardFooter className="flex flex-col space-y-4">
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full"
                 disabled={isLoading || !passwordValidation.isValid || !passwordsMatch}
               >
                 {isLoading ? "Updating Password..." : "Reset Password"}
               </Button>
-              
+
               <div className="text-sm text-center text-muted-foreground">
                 Remember your password?{' '}
                 <Link to="/admin/signin" className="text-primary hover:underline font-medium">
