@@ -63,7 +63,7 @@ const CustomMarker = ({
             {/* Pin shape */}
             <path
                 d="M12 0C7.03 0 3 4.03 3 9c0 6.5 9 18 9 18s9-11.5 9-18c0-4.97-4.03-9-9-9z"
-                fill={isImplemented ? statusColors.implemented : (isSelected ? '#FF5722' : color)}
+                fill={isSelected ? '#FF5722' : color}
                 stroke="white"
                 strokeWidth="1.5"
             />
