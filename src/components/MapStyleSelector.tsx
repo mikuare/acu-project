@@ -22,14 +22,8 @@ const mapStyles = [
   },
   {
     name: 'Satellite',
-    value: 'mapbox://styles/mapbox/satellite-v9',
-    icon: '🛰️',
-    description: 'Satellite imagery'
-  },
-  {
-    name: 'Satellite Streets',
     value: 'mapbox://styles/mapbox/satellite-streets-v12',
-    icon: '🌍',
+    icon: '🛰️',
     description: 'Satellite with labels'
   },
   {

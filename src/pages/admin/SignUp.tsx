@@ -124,7 +124,7 @@ const SignUp = () => {
                     placeholder="Jude Michael M...."
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="pl-10 bg-orange-50/30 border-orange-100 focus:border-orange-500 focus:ring-orange-500/20 transition-all h-11"
+                    className="pl-10 bg-orange-50/30 border-orange-100 focus:border-orange-500 focus:ring-orange-500/20 transition-all h-11 text-slate-900 placeholder:text-slate-500"
                     required
                   />
                 </div>
@@ -140,7 +140,7 @@ const SignUp = () => {
                     placeholder="admin@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 bg-orange-50/30 border-orange-100 focus:border-orange-500 focus:ring-orange-500/20 transition-all h-11"
+                    className="pl-10 bg-orange-50/30 border-orange-100 focus:border-orange-500 focus:ring-orange-500/20 transition-all h-11 text-slate-900 placeholder:text-slate-500"
                     required
                   />
                 </div>
@@ -159,7 +159,7 @@ const SignUp = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => handlePasswordChange(e.target.value)}
-                    className="pl-10 bg-orange-50/30 border-orange-100 focus:border-orange-500 focus:ring-orange-500/20 transition-all h-11"
+                    className="pl-10 bg-orange-50/30 border-orange-100 focus:border-orange-500 focus:ring-orange-500/20 transition-all h-11 text-slate-900 placeholder:text-slate-500"
                     required
                   />
                 </div>
@@ -178,7 +178,7 @@ const SignUp = () => {
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-10 bg-orange-50/30 border-orange-100 focus:border-orange-500 focus:ring-orange-500/20 transition-all h-11"
+                    className="pl-10 bg-orange-50/30 border-orange-100 focus:border-orange-500 focus:ring-orange-500/20 transition-all h-11 text-slate-900 placeholder:text-slate-500"
                     required
                   />
                 </div>
