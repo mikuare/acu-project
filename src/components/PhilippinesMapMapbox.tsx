@@ -12,7 +12,7 @@ import ProjectClusterModal from './ProjectClusterModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useUserCredentials } from '@/contexts/UserCredentialsContext';
-import { MAPBOX_TOKEN } from '@/config/mapbox';
+import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { getCurrentLocation, requestLocationPermission } from '@/utils/permissions';
 import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
@@ -80,10 +80,11 @@ interface PhilippinesMapMapboxProps {
 
 const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, onProjectSelect }: PhilippinesMapMapboxProps) => {
   const { isUserAuthenticated } = useUserCredentials();
+  const { token: mapboxToken } = useMapboxToken();
   const [searchParams, setSearchParams] = useSearchParams();
   const mapRef = useRef<any>(null);
   const tempMarkerRef = useRef<{ longitude: number; latitude: number } | null>(null);
-  const geoWatchId = useRef<number | null>(null);
+  const geoWatchId = useRef<string | null>(null);
   const geoBestFix = useRef<{ lat: number; lng: number; accuracy: number } | null>(null);
   const geoTimeoutTimer = useRef<number | null>(null);
 
@@ -177,12 +178,8 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
 
   const stopGeoWatch = async () => {
     if (geoWatchId.current !== null) {
-      // Use Capacitor's clearWatch for native apps, navigator for web
-      if (Capacitor.isNativePlatform()) {
-        await Geolocation.clearWatch({ id: geoWatchId.current });
-      } else {
-        navigator.geolocation.clearWatch(geoWatchId.current);
-      }
+      // Use Capacitor's clearWatch for both (as we use watchPosition from plugin)
+      await Geolocation.clearWatch({ id: geoWatchId.current });
       geoWatchId.current = null;
     }
     if (geoTimeoutTimer.current !== null) {
@@ -533,17 +530,14 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
     }
   }, [searchParams, projects, setSearchParams]);
 
-  if (!MAPBOX_TOKEN) {
+  if (!mapboxToken) {
     return (
       <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-900 p-8">
         <div className="text-center max-w-md">
           <h2 className="text-2xl font-bold text-red-600 mb-4">⚠️ Mapbox Token Missing</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-4">
-            Please add your Mapbox token to: <code className="bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded">src/config/mapbox.ts</code>
+            Please add your Mapbox token in the Admin Dashboard Settings or to: <code className="bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded">src/config/mapbox.ts</code>
           </p>
-          <pre className="bg-gray-200 dark:bg-gray-800 p-4 rounded text-left text-sm">
-            export const MAPBOX_TOKEN = 'your_token_here';
-          </pre>
           <p className="text-gray-600 dark:text-gray-400 mt-4 text-sm">
             Get your FREE token from: <a href="https://account.mapbox.com/auth/signup/" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">mapbox.com</a>
           </p>
@@ -559,7 +553,7 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
         {...viewState}
         onMove={(evt) => setViewState(evt.viewState)}
         onClick={onMapClick}
-        mapboxAccessToken={MAPBOX_TOKEN}
+        mapboxAccessToken={mapboxToken}
         style={{ width: '100%', height: '100%' }}
         mapStyle={mapStyle}
         maxBounds={[[116.5, 4.5], [126.5, 21.5]]}

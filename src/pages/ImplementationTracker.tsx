@@ -12,7 +12,7 @@ import ImplementationMap from "@/components/ImplementationMap";
 import MarkImplementedPanel from "@/components/MarkImplementedPanel";
 import ProjectOptionsDialog from "@/components/ProjectOptionsDialog";
 import ProjectDetailsModal from "@/components/ProjectDetailsModal";
-import { MAPBOX_TOKEN } from "@/config/mapbox";
+import { useMapboxToken } from "@/hooks/useMapboxToken";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -60,6 +60,7 @@ const ImplementationTracker = () => {
     const [branchFilter, setBranchFilter] = useState("all");
     const [sortBy, setSortBy] = useState("date-newest");
     const [isLoading, setIsLoading] = useState(true);
+    const { token: mapboxToken } = useMapboxToken();
 
     const [showOptions, setShowOptions] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
@@ -216,7 +217,7 @@ const ImplementationTracker = () => {
     const startNavigation = () => {
         setShowVpnWarning(false);
         if (!selectedProject) return;
-        if (!MAPBOX_TOKEN) {
+        if (!mapboxToken) {
             toast({ variant: "destructive", title: "Error", description: "Mapbox token not found" });
             return;
         }
@@ -229,7 +230,7 @@ const ImplementationTracker = () => {
 
                 try {
                     const response = await fetch(
-                        `https://api.mapbox.com/directions/v5/mapbox/driving/${longitude},${latitude};${selectedProject.longitude},${selectedProject.latitude}?geometries=geojson&access_token=${MAPBOX_TOKEN}`
+                        `https://api.mapbox.com/directions/v5/mapbox/driving/${longitude},${latitude};${selectedProject.longitude},${selectedProject.latitude}?geometries=geojson&access_token=${mapboxToken}`
                     );
                     const data = await response.json();
                     if (data.routes && data.routes[0]) {

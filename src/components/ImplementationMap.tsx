@@ -2,7 +2,7 @@ import { date } from "zod";
 import { useRef, useEffect, useState, useMemo } from 'react';
 import Map, { Marker, NavigationControl, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { MAPBOX_TOKEN } from '@/config/mapbox';
+import { useMapboxToken } from '@/hooks/useMapboxToken';
 import ProjectClusterModal from './ProjectClusterModal';
 
 // Philippines center coordinates
@@ -123,6 +123,7 @@ interface ImplementationMapProps {
 }
 
 const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route, userLocation }: ImplementationMapProps) => {
+    const { token: mapboxToken } = useMapboxToken();
     const mapRef = useRef<any>(null);
     const [showClusterModal, setShowClusterModal] = useState(false);
     const [clusterProjects, setClusterProjects] = useState<Project[]>([]);
@@ -175,7 +176,7 @@ const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route
         onProjectSelect(project.id);
     };
 
-    if (!MAPBOX_TOKEN) {
+    if (!mapboxToken) {
         return (
             <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-900 p-8">
                 <div className="text-center max-w-md">
@@ -193,7 +194,7 @@ const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route
             <Map
                 ref={mapRef}
                 initialViewState={PHILIPPINES_CENTER}
-                mapboxAccessToken={MAPBOX_TOKEN}
+                mapboxAccessToken={mapboxToken}
                 style={{ width: '100%', height: '100%' }}
                 mapStyle="mapbox://styles/mapbox/streets-v12"
                 maxBounds={[[116.5, 4.5], [126.5, 21.5]]}

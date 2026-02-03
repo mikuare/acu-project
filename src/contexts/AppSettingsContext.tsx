@@ -6,6 +6,8 @@ interface AppSettingsContextType {
   isMapLocked: boolean;
   isLoading: boolean;
   setMapLock: (locked: boolean) => Promise<boolean>;
+  mapboxToken: string | null;
+  updateMapboxToken: (token: string) => Promise<boolean>;
   refreshSettings: () => Promise<void>;
 }
 
@@ -13,6 +15,7 @@ const AppSettingsContext = createContext<AppSettingsContextType | undefined>(und
 
 export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [isMapLocked, setIsMapLocked] = useState(false);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadSettings = async () => {
@@ -30,6 +33,17 @@ export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setIsMapLocked(data?.setting_value === 'true');
       }
+
+      // Load Mapbox token
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('app_settings')
+        .select('setting_value')
+        .eq('setting_key', 'mapbox_token')
+        .single();
+
+      if (!tokenError && tokenData) {
+        setMapboxToken(tokenData.setting_value);
+      }
     } catch (error) {
       console.error('Error in loadSettings:', error);
       setIsMapLocked(false);
@@ -43,7 +57,7 @@ export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
 
     // Set up real-time subscription for settings changes
     let channel: RealtimeChannel;
-    
+
     const setupSubscription = async () => {
       channel = supabase
         .channel('app-settings-changes')
@@ -52,14 +66,17 @@ export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
           {
             event: '*',
             schema: 'public',
-            table: 'app_settings',
-            filter: 'setting_key=eq.map_lock_enabled'
+            table: 'app_settings'
           },
           (payload) => {
             console.log('App settings update received:', payload);
             if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-              const newValue = (payload.new as any)?.setting_value === 'true';
-              setIsMapLocked(newValue);
+              const record = payload.new as any;
+              if (record.setting_key === 'map_lock_enabled') {
+                setIsMapLocked(record.setting_value === 'true');
+              } else if (record.setting_key === 'mapbox_token') {
+                setMapboxToken(record.setting_value);
+              }
             }
           }
         )
@@ -82,7 +99,7 @@ export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { error } = await supabase
         .from('app_settings')
-        .update({ 
+        .update({
           setting_value: locked ? 'true' : 'false',
           updated_at: new Date().toISOString()
         })
@@ -101,12 +118,54 @@ export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateMapboxToken = async (token: string): Promise<boolean> => {
+    try {
+      // First try to update
+      const { error, count } = await supabase
+        .from('app_settings')
+        .update({
+          setting_value: token,
+          updated_at: new Date().toISOString()
+        })
+        .eq('setting_key', 'mapbox_token');
+
+      if (error) {
+        console.error('Error updating mapbox token:', error);
+        return false;
+      }
+
+      // If no rows updated, it might need to be inserted (though migration should have handled this)
+      // But for robustness:
+      /* 
+      if (count === 0) {
+        const { error: insertError } = await supabase
+          .from('app_settings')
+          .insert({
+            setting_key: 'mapbox_token',
+            setting_value: token
+          });
+          
+        if (insertError) {
+             console.error('Error inserting mapbox token:', insertError);
+             return false;
+        }
+      }
+      */
+
+      setMapboxToken(token);
+      return true;
+    } catch (error) {
+      console.error('Error in updateMapboxToken:', error);
+      return false;
+    }
+  };
+
   const refreshSettings = async () => {
     await loadSettings();
   };
 
   return (
-    <AppSettingsContext.Provider value={{ isMapLocked, isLoading, setMapLock, refreshSettings }}>
+    <AppSettingsContext.Provider value={{ isMapLocked, isLoading, setMapLock, mapboxToken, updateMapboxToken, refreshSettings }}>
       {children}
     </AppSettingsContext.Provider>
   );
