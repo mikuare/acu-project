@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Menu } from "lucide-react";
+import { ArrowLeft, Loader2, Menu, Navigation, WifiOff } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import ProjectListSidebar from "@/components/ProjectListSidebar";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +22,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { getResolvedVerificationAssets, joinStoredUrls } from "@/utils/projectMedia";
-import { hasValidCoordinates, normalizeRouteFeature } from "@/utils/mapData";
+import { distanceBetweenMeters, hasValidCoordinates, normalizeRouteFeature } from "@/utils/mapData";
 
 interface Project {
     id: string;
@@ -51,7 +51,16 @@ interface Project {
     has_verification?: boolean;
 }
 
+interface NavigationSummary {
+    distanceMeters: number | null;
+    durationSeconds: number | null;
+    nextInstruction: string | null;
+}
+
 const ImplementationTracker = () => {
+    const ARRIVAL_THRESHOLD_METERS = 35;
+    const ROUTE_REFRESH_DISTANCE_METERS = 25;
+    const ROUTE_REFRESH_INTERVAL_MS = 15000;
     const navigate = useNavigate();
     const [projects, setProjects] = useState<Project[]>([]);
     const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
@@ -70,7 +79,16 @@ const ImplementationTracker = () => {
     const [showLocationError, setShowLocationError] = useState(false);
     const [routeData, setRouteData] = useState<any>(null);
     const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
+    const [isNavigating, setIsNavigating] = useState(false);
+    const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
+    const [distanceToProject, setDistanceToProject] = useState<number | null>(null);
+    const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
+    const [navigationSummary, setNavigationSummary] = useState<NavigationSummary | null>(null);
     const watchIdRef = useRef<number | null>(null);
+    const lastRouteOriginRef = useRef<{ latitude: number; longitude: number } | null>(null);
+    const lastRouteFetchAtRef = useRef<number>(0);
+    const routeFetchInFlightRef = useRef(false);
+    const offlineNoticeShownRef = useRef(false);
 
     // Cleanup watch on unmount
     useEffect(() => {
@@ -222,7 +240,124 @@ const ImplementationTracker = () => {
         ? projects.find(p => p.id === selectedProjectId) || null
         : null;
 
+    const stopNavigation = useCallback((options?: { clearRoute?: boolean; showToast?: boolean }) => {
+        const clearRoute = options?.clearRoute ?? true;
+
+        if (watchIdRef.current !== null) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+            watchIdRef.current = null;
+        }
+
+        routeFetchInFlightRef.current = false;
+        lastRouteOriginRef.current = null;
+        lastRouteFetchAtRef.current = 0;
+        offlineNoticeShownRef.current = false;
+
+        setIsNavigating(false);
+        setIsCalculatingRoute(false);
+        setDistanceToProject(null);
+        setLocationAccuracy(null);
+        setNavigationSummary(null);
+
+        if (clearRoute) {
+            setRouteData(null);
+        }
+
+        if (options?.showToast) {
+            toast({
+                title: "Navigation stopped",
+                description: "Live GPS tracking has been stopped for this project.",
+            });
+        }
+    }, [toast]);
+
+    const fetchRouteForPosition = useCallback(
+        async (
+            currentLocation: { latitude: number; longitude: number },
+            options?: { announce?: boolean },
+        ) => {
+            if (!selectedProject || !hasValidCoordinates(selectedProject) || !mapboxToken) {
+                return;
+            }
+
+            if (!navigator.onLine) {
+                if (!offlineNoticeShownRef.current) {
+                    toast({
+                        variant: "destructive",
+                        title: "Internet required",
+                        description: "Turn on your internet connection so the route can update while you move.",
+                    });
+                    offlineNoticeShownRef.current = true;
+                }
+                return;
+            }
+
+            offlineNoticeShownRef.current = false;
+
+            if (routeFetchInFlightRef.current) {
+                return;
+            }
+
+            routeFetchInFlightRef.current = true;
+            setIsCalculatingRoute(true);
+
+            try {
+                const response = await fetch(
+                    `https://api.mapbox.com/directions/v5/mapbox/driving/${currentLocation.longitude},${currentLocation.latitude};${selectedProject.longitude},${selectedProject.latitude}?alternatives=false&geometries=geojson&overview=full&steps=true&access_token=${mapboxToken}`
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Route request failed with status ${response.status}.`);
+                }
+
+                const data = await response.json();
+                const routeRecord = data.routes?.[0];
+                const routeGeometry = routeRecord?.geometry;
+                const routeFeature = normalizeRouteFeature(routeGeometry);
+
+                if (!routeFeature) {
+                    throw new Error("Route geometry is invalid.");
+                }
+
+                setRouteData(routeFeature);
+                setNavigationSummary({
+                    distanceMeters:
+                        typeof routeRecord?.distance === "number" ? routeRecord.distance : null,
+                    durationSeconds:
+                        typeof routeRecord?.duration === "number" ? routeRecord.duration : null,
+                    nextInstruction:
+                        routeRecord?.legs?.[0]?.steps?.[0]?.maneuver?.instruction ?? null,
+                });
+                lastRouteOriginRef.current = currentLocation;
+                lastRouteFetchAtRef.current = Date.now();
+
+                if (options?.announce) {
+                    toast({
+                        title: "Navigation started",
+                        description: `Live route guidance to ${selectedProject.project_id} is now active.`,
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching route:", error);
+                if (options?.announce) {
+                    toast({
+                        variant: "destructive",
+                        title: "Could not calculate route",
+                        description: "Check your internet connection and try again.",
+                    });
+                }
+            } finally {
+                routeFetchInFlightRef.current = false;
+                setIsCalculatingRoute(false);
+            }
+        },
+        [mapboxToken, selectedProject, toast],
+    );
+
     const handleProjectSelect = (projectId: string) => {
+        if (watchIdRef.current !== null) {
+            stopNavigation();
+        }
         setSelectedProjectId(projectId);
         setRouteData(null);
         setShowOptions(true);
@@ -249,31 +384,32 @@ const ImplementationTracker = () => {
             return;
         }
 
+        if (!navigator.onLine) {
+            toast({
+                variant: "destructive",
+                title: "Internet required",
+                description: "Turn on your internet connection before starting live navigation.",
+            });
+            return;
+        }
+
         if ("geolocation" in navigator) {
+            stopNavigation();
+            setIsNavigating(true);
+
             // 1. Initial Route Fetch
             navigator.geolocation.getCurrentPosition(async (position) => {
                 const { latitude, longitude } = position.coords;
-                setUserLocation({ latitude, longitude });
-
-                try {
-                    const response = await fetch(
-                        `https://api.mapbox.com/directions/v5/mapbox/driving/${longitude},${latitude};${selectedProject.longitude},${selectedProject.latitude}?geometries=geojson&access_token=${mapboxToken}`
-                    );
-                    const data = await response.json();
-                    if (data.routes && data.routes[0]) {
-                        const routeFeature = normalizeRouteFeature(data.routes[0].geometry);
-                        if (!routeFeature) {
-                            throw new Error("Route geometry is invalid.");
-                        }
-                        setRouteData(routeFeature);
-                        toast({ title: "Route calculated", description: "Showing route to project." });
-                    }
-                } catch (error) {
-                    console.error("Error fetching route:", error);
-                    toast({ variant: "destructive", title: "Error", description: "Could not calculate route." });
-                }
+                const currentLocation = { latitude, longitude };
+                setUserLocation(currentLocation);
+                setLocationAccuracy(
+                    typeof position.coords.accuracy === "number" ? position.coords.accuracy : null,
+                );
+                setDistanceToProject(distanceBetweenMeters(currentLocation, selectedProject));
+                await fetchRouteForPosition(currentLocation, { announce: true });
             }, (error) => {
                 console.error("Geolocation error:", error);
+                stopNavigation();
                 setShowLocationError(true);
             }, {
                 enableHighAccuracy: true,
@@ -289,28 +425,88 @@ const ImplementationTracker = () => {
             watchIdRef.current = navigator.geolocation.watchPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
-                    setUserLocation({ latitude, longitude });
+                    const currentLocation = { latitude, longitude };
+                    const remainingDistance = distanceBetweenMeters(currentLocation, selectedProject);
+
+                    setUserLocation(currentLocation);
+                    setLocationAccuracy(
+                        typeof position.coords.accuracy === "number" ? position.coords.accuracy : null,
+                    );
+                    setDistanceToProject(remainingDistance);
+
+                    if (remainingDistance <= ARRIVAL_THRESHOLD_METERS) {
+                        stopNavigation();
+                        toast({
+                            title: "Destination reached",
+                            description: `You are now within ${Math.round(remainingDistance)} meters of ${selectedProject.project_id}.`,
+                        });
+                        return;
+                    }
+
+                    const movedEnough =
+                        !lastRouteOriginRef.current ||
+                        distanceBetweenMeters(currentLocation, lastRouteOriginRef.current) >= ROUTE_REFRESH_DISTANCE_METERS;
+                    const routeIsStale = Date.now() - lastRouteFetchAtRef.current >= ROUTE_REFRESH_INTERVAL_MS;
+
+                    if (movedEnough || routeIsStale || !lastRouteFetchAtRef.current) {
+                        void fetchRouteForPosition(currentLocation);
+                    }
                 },
                 (error) => {
                     console.error("Watch Position Error:", error);
                     // Don't show modal repeatedly for watch errors, just toast
                     if (error.code === 1) { // Permission Denied
                         toast({ variant: "destructive", title: "Location Access Denied", description: "Please enable location services." });
+                        stopNavigation();
                     }
                 },
                 {
                     enableHighAccuracy: true,
                     maximumAge: 0,
-                    timeout: 5000
+                    timeout: 10000
                 }
             );
 
-            toast({ title: "Live Tracking Started", description: "Your location will update as you move." });
-
         } else {
+            stopNavigation();
             toast({ variant: "destructive", title: "Error", description: "Geolocation not supported." });
         }
     };
+
+    useEffect(() => {
+        if (!isNavigating) {
+            return;
+        }
+
+        const handleOffline = () => {
+            offlineNoticeShownRef.current = true;
+            toast({
+                variant: "destructive",
+                title: "Internet disconnected",
+                description: "Live route updates are paused until your internet connection returns.",
+            });
+        };
+
+        const handleOnline = () => {
+            offlineNoticeShownRef.current = false;
+
+            if (userLocation) {
+                void fetchRouteForPosition(userLocation);
+            }
+
+            toast({
+                title: "Internet restored",
+                description: "Live route guidance is updating again.",
+            });
+        };
+
+        window.addEventListener("offline", handleOffline);
+        window.addEventListener("online", handleOnline);
+        return () => {
+            window.removeEventListener("offline", handleOffline);
+            window.removeEventListener("online", handleOnline);
+        };
+    }, [fetchRouteForPosition, isNavigating, toast, userLocation]);
 
 
     const handleSuccess = () => {
@@ -328,6 +524,20 @@ const ImplementationTracker = () => {
         QGDC: "bg-[#000000] text-white",
         QMB: "bg-[#DC2626] text-white",
     };
+
+    const formattedRouteDistance =
+        navigationSummary?.distanceMeters !== null && navigationSummary?.distanceMeters !== undefined
+            ? navigationSummary.distanceMeters >= 1000
+                ? `${(navigationSummary.distanceMeters / 1000).toFixed(1)} km`
+                : `${Math.max(1, Math.round(navigationSummary.distanceMeters))} m`
+            : "--";
+
+    const formattedEta =
+        navigationSummary?.durationSeconds !== null && navigationSummary?.durationSeconds !== undefined
+            ? navigationSummary.durationSeconds >= 3600
+                ? `${Math.floor(navigationSummary.durationSeconds / 3600)}h ${Math.round((navigationSummary.durationSeconds % 3600) / 60)}m`
+                : `${Math.max(1, Math.round(navigationSummary.durationSeconds / 60))} min`
+            : "--";
 
     return (
         <div className="h-screen flex flex-col bg-background">
@@ -411,6 +621,75 @@ const ImplementationTracker = () => {
                         route={routeData}
                         userLocation={userLocation}
                     />
+
+                    {selectedProject && isNavigating && (
+                        <div className="absolute top-3 left-3 right-3 md:left-auto md:w-[340px] z-20 rounded-xl border bg-card/95 backdrop-blur shadow-lg p-4 space-y-3">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="space-y-1 min-w-0">
+                                    <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                                        <Navigation className="h-4 w-4 text-[#FF5722]" />
+                                        <span className="truncate">Navigating to {selectedProject.project_id}</span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Route updates automatically while your GPS and internet stay on.
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => stopNavigation({ showToast: true })}
+                                >
+                                    Stop
+                                </Button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="rounded-lg bg-muted/60 p-3">
+                                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Remaining</p>
+                                    <p className="text-lg font-bold text-foreground">
+                                        {distanceToProject !== null ? `${Math.max(1, Math.round(distanceToProject))} m` : "--"}
+                                    </p>
+                                </div>
+                                <div className="rounded-lg bg-muted/60 p-3">
+                                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">GPS Accuracy</p>
+                                    <p className="text-lg font-bold text-foreground">
+                                        {locationAccuracy !== null ? `±${Math.round(locationAccuracy)} m` : "--"}
+                                    </p>
+                                </div>
+                                <div className="rounded-lg bg-muted/60 p-3">
+                                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Route Distance</p>
+                                    <p className="text-lg font-bold text-foreground">{formattedRouteDistance}</p>
+                                </div>
+                                <div className="rounded-lg bg-muted/60 p-3">
+                                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">ETA</p>
+                                    <p className="text-lg font-bold text-foreground">{formattedEta}</p>
+                                </div>
+                            </div>
+
+                            <div className="rounded-lg border bg-background/80 p-3">
+                                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Next Guide</p>
+                                <p className="mt-1 text-sm font-medium text-foreground">
+                                    {navigationSummary?.nextInstruction ?? "Follow the highlighted route to the project location."}
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                {isCalculatingRoute ? (
+                                    <>
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin text-[#FF5722]" />
+                                        Updating route guidance...
+                                    </>
+                                ) : navigator.onLine ? (
+                                    "Live tracking is active."
+                                ) : (
+                                    <>
+                                        <WifiOff className="h-3.5 w-3.5 text-destructive" />
+                                        Waiting for internet to refresh the route.
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </main>
 
                 {/* Mark Implemented Panel */}

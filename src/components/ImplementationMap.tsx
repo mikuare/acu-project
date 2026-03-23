@@ -1,10 +1,9 @@
-import { date } from "zod";
 import { useRef, useEffect, useState, useMemo } from 'react';
 import Map, { Marker, NavigationControl, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
 import ProjectClusterModal from './ProjectClusterModal';
-import { hasValidCoordinates, normalizeRouteFeature } from '@/utils/mapData';
+import { getRouteBounds, hasValidCoordinates, normalizeRouteFeature } from '@/utils/mapData';
 
 // Philippines center coordinates
 const PHILIPPINES_CENTER = {
@@ -166,7 +165,24 @@ const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route
                 });
             }
         }
-    }, [selectedProjectId, projects]);
+    }, [selectedProjectId, validProjects]);
+
+    useEffect(() => {
+        if (!safeRoute || !mapRef.current) {
+            return;
+        }
+
+        const bounds = getRouteBounds(safeRoute);
+        if (!bounds) {
+            return;
+        }
+
+        mapRef.current.fitBounds(bounds, {
+            padding: { top: 80, right: 80, bottom: 80, left: 80 },
+            duration: 1000,
+            maxZoom: 16,
+        });
+    }, [safeRoute]);
 
     const handleMarkerClick = (clusterKey: string, projectsAtLocation: Project[]) => {
         if (projectsAtLocation.length === 1) {

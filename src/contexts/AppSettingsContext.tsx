@@ -69,7 +69,6 @@ export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
             table: 'app_settings'
           },
           (payload) => {
-            console.log('App settings update received:', payload);
             if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
               const record = payload.new as any;
               if (record.setting_key === 'map_lock_enabled') {
@@ -80,9 +79,7 @@ export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
             }
           }
         )
-        .subscribe((status) => {
-          console.log('App settings subscription status:', status);
-        });
+        .subscribe();
     };
 
     setupSubscription();
