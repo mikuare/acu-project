@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Link } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { splitStoredUrls } from '@/utils/projectMedia';
 
 interface Project {
   id: string;
@@ -47,6 +48,8 @@ const branchColors = {
   QGDC: "bg-[#000000] hover:bg-[#1a1a1a]",   // Black
   QMB: "bg-[#DC2626] hover:bg-[#B91C1C]",    // Bright Red
 };
+
+const getImageUrls = (imageUrl: string | null) => splitStoredUrls(imageUrl);
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -532,7 +535,7 @@ const Dashboard = () => {
                           {project.image_url && (
                             <Badge variant="secondary" className="text-xs ml-2">
                               <ImageIcon className="w-3 h-3 mr-1" />
-                              {project.image_url.split(',').filter(Boolean).length}
+                              {getImageUrls(project.image_url).length}
                             </Badge>
                           )}
                         </div>
@@ -598,27 +601,31 @@ const Dashboard = () => {
                           </div>
                         )}
 
-                        {project.image_url && (
-                          <div className="pt-2 border-t">
-                            <div className="flex gap-2 overflow-x-auto">
-                              {project.image_url.split(',').filter(Boolean).slice(0, 3).map((url, idx) => (
+                        {project.image_url && (() => {
+                          const projectImageUrls = getImageUrls(project.image_url);
+
+                          return projectImageUrls.length > 0 && (
+                            <div className="pt-2 border-t">
+                              <div
+                                className="relative h-16 w-16 cursor-pointer overflow-hidden rounded"
+                                onClick={() => handleImageClick(projectImageUrls, 0)}
+                              >
                                 <img
-                                  key={idx}
-                                  src={url}
-                                  alt={`Project ${idx + 1}`}
-                                  className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80"
-                                  onClick={() => handleImageClick(project.image_url?.split(',').filter(Boolean) || [], idx)}
+                                  src={projectImageUrls[0]}
+                                  alt="Project preview"
+                                  loading="lazy"
+                                  decoding="async"
+                                  className="h-full w-full object-cover transition-opacity hover:opacity-80"
                                 />
-                              ))}
-                              {project.image_url.split(',').filter(Boolean).length > 3 && (
-                                <div className="w-16 h-16 bg-muted rounded flex items-center justify-center text-xs font-medium cursor-pointer"
-                                  onClick={() => handleImageClick(project.image_url?.split(',').filter(Boolean) || [], 3)}>
-                                  +{project.image_url.split(',').filter(Boolean).length - 3}
-                                </div>
-                              )}
+                                {projectImageUrls.length > 1 && (
+                                  <div className="absolute bottom-1 right-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                                    +{projectImageUrls.length - 1}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          );
+                        })()}
 
                         <div className="flex items-center gap-2 pt-2">
                           <Button
@@ -687,7 +694,7 @@ const Dashboard = () => {
                             <TableCell className="text-center">
                               {project.image_url ? (
                                 <Badge variant="secondary" className="text-xs">
-                                  {project.image_url.split(',').filter(Boolean).length}
+                                  {getImageUrls(project.image_url).length}
                                 </Badge>
                               ) : (
                                 <span className="text-muted-foreground text-xs">-</span>
@@ -826,7 +833,7 @@ const Dashboard = () => {
                                       </div>
                                     )}
                                     {project.image_url && (() => {
-                                      const projectImageUrls = project.image_url.split(',').filter(Boolean).map(url => url.trim());
+                                      const projectImageUrls = getImageUrls(project.image_url);
                                       return projectImageUrls.length > 0 && (
                                         <div className="col-span-2 md:col-span-3">
                                           <p className="text-xs font-medium text-muted-foreground mb-2">
@@ -845,6 +852,8 @@ const Dashboard = () => {
                                                 <img
                                                   src={url}
                                                   alt={`Project ${index + 1}`}
+                                                  loading={index === 0 ? "eager" : "lazy"}
+                                                  decoding="async"
                                                   className="w-full h-32 object-cover rounded-lg border hover:opacity-90 transition-opacity"
                                                 />
                                                 <div className="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-2 py-1 rounded pointer-events-none">

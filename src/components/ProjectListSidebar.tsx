@@ -11,6 +11,7 @@ interface Project {
     description: string;
     status: string;
     branch: "ADC" | "QGDC" | "QMB";
+    has_verification?: boolean;
     [key: string]: any;
 }
 
@@ -150,6 +151,11 @@ const ProjectListSidebar = ({
                                         }`}>
                                         {project.status}
                                     </span>
+                                    {project.status === 'implemented' && project.has_verification && (
+                                        <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
+                                            verified
+                                        </span>
+                                    )}
                                 </div>
                             </button>
                         ))}

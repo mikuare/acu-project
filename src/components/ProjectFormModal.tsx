@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { PROJECT_CATEGORIES, REGIONS, PROVINCES_BY_REGION, Region, getRegionForProvince } from "@/utils/philippineData";
+import { optimizeImageFile } from "@/utils/optimizeImageFile";
 
 interface ProjectFormModalProps {
   open: boolean;
@@ -314,11 +315,12 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
       // Upload all images if provided
       if (imageFiles.length > 0) {
         for (const imageFile of imageFiles) {
-          const fileExt = imageFile.name.split('.').pop();
+          const optimizedImage = await optimizeImageFile(imageFile);
+          const fileExt = optimizedImage.name.split('.').pop();
           const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
           const { error: uploadError } = await supabase.storage
             .from('project-images')
-            .upload(fileName, imageFile);
+            .upload(fileName, optimizedImage);
 
           if (uploadError) throw uploadError;
 

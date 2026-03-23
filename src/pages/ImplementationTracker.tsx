@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, ArrowLeft, Menu } from "lucide-react";
+import { ArrowLeft, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import ProjectListSidebar from "@/components/ProjectListSidebar";
 import { useNavigate } from "react-router-dom";
@@ -23,7 +21,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useRef } from "react";
+import { getResolvedVerificationAssets, joinStoredUrls } from "@/utils/projectMedia";
 
 interface Project {
     id: string;
@@ -48,6 +46,8 @@ interface Project {
     implementation_notes?: string;
     verification_images?: string;
     verification_documents?: string;
+    verification_source?: "implementation" | "project" | "none";
+    has_verification?: boolean;
 }
 
 const ImplementationTracker = () => {
@@ -109,14 +109,25 @@ const ImplementationTracker = () => {
             // 4. Merge data
             const mergedProjects = (projectsData || []).map(p => {
                 const impl = implMap.get(p.id);
+                const mergedStatus = impl?.status || p.status;
+                const verification = getResolvedVerificationAssets({
+                    status: mergedStatus,
+                    image_url: p.image_url,
+                    document_urls: p.document_urls,
+                    verification_images: impl?.verification_images,
+                    verification_documents: impl?.verification_documents,
+                });
+
                 return {
                     ...p,
-                    status: impl ? impl.status : p.status,
+                    status: mergedStatus,
                     completion_date: impl?.completion_date,
                     timekeeper_name: impl?.timekeeper_name,
                     implementation_notes: impl?.implementation_notes,
-                    verification_images: impl?.verification_images,
-                    verification_documents: impl?.verification_documents
+                    verification_images: joinStoredUrls(verification.images) ?? undefined,
+                    verification_documents: joinStoredUrls(verification.documents) ?? undefined,
+                    verification_source: verification.source,
+                    has_verification: verification.images.length > 0 || verification.documents.length > 0,
                 };
             });
 
@@ -145,6 +156,13 @@ const ImplementationTracker = () => {
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'projects' },
+                () => {
+                    fetchProjects();
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'project_implementations' },
                 () => {
                     fetchProjects();
                 }

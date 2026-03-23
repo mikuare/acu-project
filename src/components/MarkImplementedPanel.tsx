@@ -7,8 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Upload, X, CheckCircle, Loader2, Edit } from "lucide-react";
+import { X, CheckCircle, Loader2, Edit } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getResolvedVerificationAssets, joinStoredUrls } from "@/utils/projectMedia";
+import { optimizeImageFile } from "@/utils/optimizeImageFile";
+import { optimizeStoredImages } from "@/utils/optimizeStoredImages";
 
 interface Project {
     id: string;
@@ -25,6 +28,7 @@ interface Project {
     verification_images?: string;
     verification_documents?: string;
     timekeeper_name?: string;
+    verification_source?: "implementation" | "project" | "none";
 }
 
 interface MarkImplementedPanelProps {
@@ -40,20 +44,40 @@ const branchColors = {
 };
 
 const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedPanelProps) => {
+    const resolvedVerification = getResolvedVerificationAssets({
+        status: project?.status,
+        image_url: project?.image_url,
+        document_urls: project?.document_urls,
+        verification_images: project?.verification_images,
+        verification_documents: project?.verification_documents,
+    });
     const [completionDate, setCompletionDate] = useState(
         project?.completion_date || new Date().toISOString().split('T')[0]
     );
     const [timekeeperName, setTimekeeperName] = useState(project?.timekeeper_name || "");
     const [notes, setNotes] = useState(project?.implementation_notes || "");
     const [status, setStatus] = useState(project?.status || 'ongoing');
-    const [keptImages, setKeptImages] = useState<string[]>(project?.verification_images ? project.verification_images.split(',') : []);
-    const [keptDocs, setKeptDocs] = useState<string[]>(project?.verification_documents ? project.verification_documents.split(',') : []);
+    const [keptImages, setKeptImages] = useState<string[]>(resolvedVerification.images);
+    const [keptDocs, setKeptDocs] = useState<string[]>(resolvedVerification.documents);
     const [verificationImages, setVerificationImages] = useState<File[]>([]);
     const [verificationDocs, setVerificationDocs] = useState<File[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isEditing, setIsEditing] = useState(project?.status !== 'implemented');
+    const [isOptimizingExistingImages, setIsOptimizingExistingImages] = useState(false);
+    const [isEditing, setIsEditing] = useState(
+        project?.status !== 'implemented' ||
+        !project?.completion_date ||
+        !project?.timekeeper_name ||
+        (resolvedVerification.images.length === 0 && resolvedVerification.documents.length === 0)
+    );
 
     if (!project) return null;
+
+    const totalVerificationFiles =
+        keptImages.length +
+        keptDocs.length +
+        verificationImages.length +
+        verificationDocs.length;
+    const requiresVerification = status === 'implemented';
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -77,12 +101,16 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
 
     const uploadFile = async (file: File, bucket: string): Promise<string | null> => {
         try {
+            const uploadTarget = bucket === 'project-images'
+                ? await optimizeImageFile(file)
+                : file;
+
             // Preserve original filename with timestamp prefix
-            const fileName = `${Date.now()}_${file.name}`;
+            const fileName = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${uploadTarget.name}`;
 
             const { error } = await supabase.storage
                 .from(bucket)
-                .upload(fileName, file);
+                .upload(fileName, uploadTarget);
 
             if (error) throw error;
 
@@ -98,33 +126,52 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
     };
 
     const handleSubmit = async () => {
+        if (requiresVerification && !completionDate) {
+            toast({
+                title: "Completion date required",
+                description: "Please set the completion date before marking this project as implemented.",
+                variant: "destructive",
+            });
+            return;
+        }
 
+        if (requiresVerification && !timekeeperName.trim()) {
+            toast({
+                title: "Verifier required",
+                description: "Please enter the time keeper or checker name.",
+                variant: "destructive",
+            });
+            return;
+        }
 
         setIsSubmitting(true);
 
         try {
             // Upload verification files
-            let uploadedImageUrls: string[] = [];
-            let uploadedDocUrls: string[] = [];
+            const uploadedImageUrls = (await Promise.all(
+                verificationImages.map((img) => uploadFile(img, 'project-images'))
+            )).filter((url): url is string => Boolean(url));
 
-            // Upload images
-            for (const img of verificationImages) {
-                const url = await uploadFile(img, 'project-images');
-                if (url) uploadedImageUrls.push(url);
-            }
-
-            // Upload documents
-            for (const doc of verificationDocs) {
-                const url = await uploadFile(doc, 'project-documents');
-                if (url) uploadedDocUrls.push(url);
-            }
-
-            // Combine with existing files
-
+            const uploadedDocUrls = (await Promise.all(
+                verificationDocs.map((doc) => uploadFile(doc, 'project-documents'))
+            )).filter((url): url is string => Boolean(url));
 
             // Combine with kept files (not using project props directly anymore)
             const finalImages = [...keptImages, ...uploadedImageUrls];
             const finalDocs = [...keptDocs, ...uploadedDocUrls];
+
+            if (requiresVerification && finalImages.length === 0 && finalDocs.length === 0) {
+                throw new Error("Attach at least one verification image or document before marking the project as implemented.");
+            }
+
+            const { error: projectStatusError } = await supabase
+                .from('projects')
+                .update({
+                    status: status as any,
+                })
+                .eq('id', project.id);
+
+            if (projectStatusError) throw projectStatusError;
 
             // Create or update implementation record
             const { error: updateError } = await (supabase as any)
@@ -135,8 +182,8 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                     completion_date: completionDate,
                     timekeeper_name: timekeeperName,
                     implementation_notes: notes,
-                    verification_images: finalImages.length > 0 ? (finalImages.join(',') as string) : null,
-                    verification_documents: finalDocs.length > 0 ? (finalDocs.join(',') as string) : null,
+                    verification_images: joinStoredUrls(finalImages),
+                    verification_documents: joinStoredUrls(finalDocs),
                 }, { onConflict: 'project_id' });
 
             if (updateError) throw updateError;
@@ -156,6 +203,65 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
             });
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleOptimizeExistingImages = async () => {
+        if (keptImages.length === 0) return;
+
+        setIsOptimizingExistingImages(true);
+
+        try {
+            const { urls: optimizedUrls, replacedCount } = await optimizeStoredImages(keptImages, 'project-images');
+
+            if (replacedCount === 0) {
+                toast({
+                    title: "No optimization needed",
+                    description: "These verification images are already small enough.",
+                });
+                return;
+            }
+
+            if (resolvedVerification.source === 'implementation') {
+                const { error } = await (supabase as any)
+                    .from('project_implementations')
+                    .upsert({
+                        project_id: project.id,
+                        status: status,
+                        completion_date: completionDate,
+                        timekeeper_name: timekeeperName,
+                        implementation_notes: notes,
+                        verification_images: joinStoredUrls(optimizedUrls),
+                        verification_documents: joinStoredUrls(keptDocs),
+                    }, { onConflict: 'project_id' });
+
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('projects')
+                    .update({
+                        image_url: joinStoredUrls(optimizedUrls),
+                    })
+                    .eq('id', project.id);
+
+                if (error) throw error;
+            }
+
+            setKeptImages(optimizedUrls);
+
+            toast({
+                title: "Images optimized",
+                description: `${replacedCount} existing verification image${replacedCount === 1 ? '' : 's'} replaced with faster copies.`,
+            });
+        } catch (error: any) {
+            console.error('Error optimizing verification images:', error);
+            toast({
+                title: "Optimization failed",
+                description: error.message || "Could not optimize existing verification images.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsOptimizingExistingImages(false);
         }
     };
 
@@ -195,11 +301,16 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                                 </Badge>
                             )}
                         </div>
+                        {resolvedVerification.source === 'project' && (
+                            <p className="text-xs text-muted-foreground">
+                                Existing project attachments are being used as verification for this implemented project.
+                            </p>
+                        )}
                     </div>
 
                     {/* Completion Date */}
                     <div className="space-y-2">
-                        <Label htmlFor="completionDate">Completion Date *</Label>
+                        <Label htmlFor="completionDate">Completion Date {requiresVerification ? '*' : ''}</Label>
                         {isEditing ? (
                             <>
                                 <Input
@@ -227,7 +338,7 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
 
                     {/* Time Keeper / Checker Name */}
                     <div className="space-y-2">
-                        <Label htmlFor="timekeeperName">Time Keeper / Checker Name *</Label>
+                        <Label htmlFor="timekeeperName">Time Keeper / Checker Name {requiresVerification ? '*' : ''}</Label>
                         {isEditing ? (
                             <>
                                 <Input
@@ -273,7 +384,25 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                     {/* Existing Verification Images */}
                     {keptImages.length > 0 && (
                         <div className="space-y-2">
-                            <Label>{isEditing ? 'Existing Images' : 'Verification Images'}</Label>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <Label>{isEditing ? 'Existing Images' : 'Verification Images'}</Label>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleOptimizeExistingImages}
+                                    disabled={isSubmitting || isOptimizingExistingImages}
+                                >
+                                    {isOptimizingExistingImages ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Optimizing...
+                                        </>
+                                    ) : (
+                                        "Optimize Existing Images"
+                                    )}
+                                </Button>
+                            </div>
                             <div className="grid grid-cols-3 gap-2">
                                 {keptImages.map((url, i) => (
                                     <div key={i} className="relative group aspect-video">
@@ -286,6 +415,8 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                                             <img
                                                 src={url}
                                                 alt={`Verification ${i}`}
+                                                loading="lazy"
+                                                decoding="async"
                                                 className="w-full h-full object-cover rounded border transition-transform hover:scale-105"
                                             />
                                         </a>
@@ -321,6 +452,8 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                                             <img
                                                 src={URL.createObjectURL(file)}
                                                 alt={`Verification ${index + 1}`}
+                                                loading="lazy"
+                                                decoding="async"
                                                 className="w-full h-24 object-cover rounded border"
                                             />
                                             <Button
@@ -415,14 +548,14 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                     <Button
                         variant="outline"
                         onClick={onCancel}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isOptimizingExistingImages}
                     >
                         Cancel
                     </Button>
                     {isEditing ? (
                         <Button
                             onClick={handleSubmit}
-                            disabled={isSubmitting || !completionDate || !timekeeperName}
+                            disabled={isSubmitting || isOptimizingExistingImages || (requiresVerification && (!completionDate || !timekeeperName.trim() || totalVerificationFiles === 0))}
                             className="bg-green-600 hover:bg-green-700"
                         >
                             {isSubmitting ? (

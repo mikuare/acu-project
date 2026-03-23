@@ -1,7 +1,7 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, Maximize2, Minimize2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ImageViewerModalProps {
   isOpen: boolean;
@@ -14,6 +14,26 @@ const ImageViewerModal = ({ isOpen, onClose, images, initialIndex }: ImageViewer
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [zoom, setZoom] = useState(1);
   const [fitToScreen, setFitToScreen] = useState(true);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentIndex(initialIndex);
+      setZoom(1);
+      setFitToScreen(true);
+    }
+  }, [initialIndex, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || images.length === 0) return;
+
+    const preloadIndexes = [currentIndex, currentIndex + 1, currentIndex - 1]
+      .map((index) => (index + images.length) % images.length);
+
+    preloadIndexes.forEach((index) => {
+      const image = new window.Image();
+      image.src = images[index];
+    });
+  }, [currentIndex, images, isOpen]);
 
   const handlePrevious = () => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
@@ -169,6 +189,8 @@ const ImageViewerModal = ({ isOpen, onClose, images, initialIndex }: ImageViewer
             <img
               src={images[currentIndex]}
               alt={`Image ${currentIndex + 1}`}
+              loading="eager"
+              decoding="async"
               className={`transition-all duration-200 ${fitToScreen ? 'object-contain max-w-full max-h-full' : 'object-none'
                 }`}
               style={fitToScreen ? {} : {

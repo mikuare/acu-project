@@ -12,6 +12,7 @@ import { useState } from "react";
 import ImageViewerModal from "./ImageViewerModal";
 import ReportProjectModal from "./ReportProjectModal";
 import ShareProjectModal from "./ShareProjectModal";
+import { splitStoredUrls } from "@/utils/projectMedia";
 
 interface Project {
   id: string;
@@ -60,6 +61,9 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
   const [shareModalOpen, setShareModalOpen] = useState(false);
 
   if (!project) return null;
+
+  const projectImageUrls = splitStoredUrls(project.image_url);
+  const projectDocumentUrls = splitStoredUrls(project.document_urls);
 
   const handleOpenGoogleMaps = () => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${project.latitude},${project.longitude}`;
@@ -364,17 +368,19 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
 
                 {/* Gallery Tab */}
                 <TabsContent value="gallery" className="pt-6">
-                  {project.image_url ? (
+                  {projectImageUrls.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                      {project.image_url.split(',').filter(Boolean).map((url, index) => (
+                      {projectImageUrls.map((url, index) => (
                         <div
                           key={index}
                           className="group relative aspect-video cursor-pointer overflow-hidden rounded-lg border bg-slate-100"
-                          onClick={() => handleImageClick(project.image_url!.split(','), index)}
+                          onClick={() => handleImageClick(projectImageUrls, index)}
                         >
                           <img
-                            src={url.trim()}
+                            src={url}
                             alt={`Project image ${index + 1}`}
+                            loading="lazy"
+                            decoding="async"
                             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                           />
                           <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/20">
@@ -393,9 +399,9 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
 
                 {/* Documents Tab */}
                 <TabsContent value="documents" className="pt-6">
-                  {project.document_urls ? (
+                  {projectDocumentUrls.length > 0 ? (
                     <div className="grid grid-cols-1 gap-3">
-                      {project.document_urls.split(',').filter(Boolean).map((url, index) => {
+                      {projectDocumentUrls.map((url, index) => {
                         // Extract filename from URL
                         const fileName = url.split('/').pop()?.split('?')[0] || `Document ${index + 1}`;
                         // Remove timestamp prefix (first part before underscore)
@@ -404,7 +410,7 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
                         return (
                           <a
                             key={index}
-                            href={url.trim()}
+                            href={url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border rounded-lg hover:border-[#FF5722] hover:shadow-sm transition-all"

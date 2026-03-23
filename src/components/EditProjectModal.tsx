@@ -6,12 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { Upload, X as XIcon, MapPin, Trash2 } from "lucide-react";
+import { Upload, X as XIcon, MapPin, Trash2, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ImageViewerModal from "./ImageViewerModal";
+import { optimizeImageFile } from "@/utils/optimizeImageFile";
+import { joinStoredUrls, splitStoredUrls } from "@/utils/projectMedia";
+import { optimizeStoredImages } from "@/utils/optimizeStoredImages";
 
 interface Project {
   id: string;
@@ -77,6 +80,7 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
   const [newDocuments, setNewDocuments] = useState<File[]>([]);
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [existingDocUrls, setExistingDocUrls] = useState<string[]>([]);
+  const [isOptimizingExistingImages, setIsOptimizingExistingImages] = useState(false);
 
   useEffect(() => {
     if (project) {
@@ -99,14 +103,14 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
 
       // Set existing images
       if (project.image_url) {
-        setExistingImageUrls(project.image_url.split(',').filter(Boolean).map(url => url.trim()));
+        setExistingImageUrls(splitStoredUrls(project.image_url));
       } else {
         setExistingImageUrls([]);
       }
 
       // Set existing documents
       if (project.document_urls) {
-        setExistingDocUrls(project.document_urls.split(',').filter(Boolean).map(url => url.trim()));
+        setExistingDocUrls(splitStoredUrls(project.document_urls));
       } else {
         setExistingDocUrls([]);
       }
@@ -145,12 +149,16 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
   };
 
   const uploadFile = async (file: File, bucket: string): Promise<string | null> => {
+    const uploadTarget = bucket === 'project-images'
+      ? await optimizeImageFile(file)
+      : file;
+
     // Preserve original filename with timestamp prefix to prevent conflicts
-    const fileName = `${Date.now()}_${file.name}`;
+    const fileName = `${Date.now()}_${uploadTarget.name}`;
 
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(fileName, file);
+      .upload(fileName, uploadTarget);
 
     if (error) {
       console.error(`Error uploading to ${bucket}:`, error);
@@ -266,6 +274,49 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
     setImageUrls(urls);
     setSelectedImageIndex(index);
     setShowImageViewer(true);
+  };
+
+  const handleOptimizeExistingImages = async () => {
+    if (!project || existingImageUrls.length === 0) return;
+
+    setIsOptimizingExistingImages(true);
+
+    try {
+      const { urls: optimizedUrls, replacedCount } = await optimizeStoredImages(existingImageUrls, 'project-images');
+
+      if (replacedCount === 0) {
+        toast({
+          title: "No optimization needed",
+          description: "These stored images are already small enough.",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          image_url: joinStoredUrls(optimizedUrls),
+        })
+        .eq('id', project.id);
+
+      if (error) throw error;
+
+      setExistingImageUrls(optimizedUrls);
+
+      toast({
+        title: "Images optimized",
+        description: `${replacedCount} existing project image${replacedCount === 1 ? '' : 's'} replaced with faster copies.`,
+      });
+    } catch (error: any) {
+      console.error("Error optimizing project images:", error);
+      toast({
+        title: "Optimization failed",
+        description: error.message || "Could not optimize existing project images.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsOptimizingExistingImages(false);
+    }
   };
 
   if (!project) return null;
@@ -445,7 +496,27 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
 
             {/* Images */}
             <div className="space-y-2">
-              <Label>Project Images</Label>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label>Project Images</Label>
+                {existingImageUrls.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleOptimizeExistingImages}
+                    disabled={isSubmitting || isOptimizingExistingImages}
+                  >
+                    {isOptimizingExistingImages ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Optimizing...
+                      </>
+                    ) : (
+                      "Optimize Existing Images"
+                    )}
+                  </Button>
+                )}
+              </div>
               {allImagesToDisplay.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-2">
                   {allImagesToDisplay.map((img, index) => (
@@ -471,7 +542,7 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
               )}
               <div>
                 <Input type="file" multiple accept="image/*" onChange={handleImageUpload} className="cursor-pointer" />
-                <p className="text-xs text-muted-foreground mt-1">Upload new images or keep existing ones</p>
+                <p className="text-xs text-muted-foreground mt-1">Upload new images or keep existing ones. Use optimize for older slow-loading uploads.</p>
               </div>
             </div>
 
@@ -527,10 +598,10 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting || isOptimizingExistingImages}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
+            <Button onClick={handleSubmit} disabled={isSubmitting || isOptimizingExistingImages}>
               {isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
