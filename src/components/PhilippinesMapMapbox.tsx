@@ -16,6 +16,7 @@ import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { getCurrentLocation, requestLocationPermission } from '@/utils/permissions';
 import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
+import { hasValidCoordinates, isFiniteCoordinate } from '@/utils/mapData';
 
 // Philippines center coordinates
 const PHILIPPINES_CENTER = {
@@ -103,12 +104,16 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
   const [viewState, setViewState] = useState(PHILIPPINES_CENTER);
   const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/streets-v12');
   const prevSelectedIdRef = useRef<string | null>(null);
+  const validProjects = useMemo(
+    () => projects.filter((project): project is typeof project => hasValidCoordinates(project)),
+    [projects]
+  );
 
   // Group projects by coordinates (rounded to 6 decimals to handle minor GPS variations)
   const projectClusters = useMemo(() => {
     const clusters: globalThis.Map<string, any[]> = new globalThis.Map();
 
-    projects.forEach(project => {
+    validProjects.forEach(project => {
       // Round coordinates to 6 decimal places to group nearby projects
       const key = `${project.latitude.toFixed(6)},${project.longitude.toFixed(6)}`;
       if (!clusters.has(key)) {
@@ -121,14 +126,14 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
     });
 
     return clusters;
-  }, [projects]);
+  }, [validProjects]);
 
   // Fly to selected project when selectedProjectId changes
   useEffect(() => {
     // Only fly if selectedProjectId actually changed (not just projects array update)
     if (selectedProjectId && selectedProjectId !== prevSelectedIdRef.current && mapRef.current) {
-      const selectedProject = projects.find(p => p.id === selectedProjectId);
-      if (selectedProject && selectedProject.latitude && selectedProject.longitude) {
+      const selectedProject = validProjects.find(p => p.id === selectedProjectId);
+      if (selectedProject) {
         // Fly to the project location
         mapRef.current.flyTo({
           center: [selectedProject.longitude, selectedProject.latitude],
@@ -152,7 +157,7 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
         prevSelectedIdRef.current = selectedProjectId;
       }
     }
-  }, [selectedProjectId, projects]);
+  }, [selectedProjectId, validProjects]);
 
   // Geolocation helpers
   const isEmbeddedInIframe = () => {
@@ -494,6 +499,9 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
     if (lat && lng) {
       const latitude = parseFloat(lat);
       const longitude = parseFloat(lng);
+      if (!isFiniteCoordinate(latitude) || !isFiniteCoordinate(longitude)) {
+        return;
+      }
 
       setViewState({
         longitude,
@@ -504,7 +512,7 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
       setHighlightMarker({ longitude, latitude, animate: true });
 
       if (projectId) {
-        const project = projects.find(p => p.id === projectId);
+        const project = validProjects.find(p => p.id === projectId);
         if (project) {
           setSelectedProject(project);
           setShowProjectDetails(true);
@@ -528,7 +536,7 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
       newParams.delete('project');
       setSearchParams(newParams, { replace: true });
     }
-  }, [searchParams, projects, setSearchParams]);
+  }, [searchParams, setSearchParams, validProjects]);
 
   if (!mapboxToken) {
     return (
@@ -556,6 +564,8 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
         mapboxAccessToken={mapboxToken}
         style={{ width: '100%', height: '100%' }}
         mapStyle={mapStyle}
+        projection={{ name: 'mercator' }}
+        fog={undefined}
         maxBounds={[[116.5, 4.5], [126.5, 21.5]]}
         minZoom={5}
         maxZoom={19}

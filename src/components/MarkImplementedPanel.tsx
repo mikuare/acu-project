@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -273,6 +273,9 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                         <CheckCircle className="w-5 h-5 text-green-600" />
                         {project.status === 'implemented' ? 'Update Implementation' : 'Mark as Implemented'}
                     </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Manage implementation details, verifier information, and verification attachments for the selected project.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4">

@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, Maximize2, Minimize2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -87,6 +87,10 @@ const ImageViewerModal = ({ isOpen, onClose, images, initialIndex }: ImageViewer
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[100vw] max-h-[100vh] w-screen h-screen p-0 m-0 border-0">
+        <DialogTitle className="sr-only">Image Viewer</DialogTitle>
+        <DialogDescription className="sr-only">
+          Preview project images, move between images, zoom, and download the current image.
+        </DialogDescription>
         <div className="relative bg-black w-full h-full flex items-center justify-center overflow-auto">
           {/* Close Button */}
           <Button

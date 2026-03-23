@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -135,10 +135,6 @@ const Dashboard = () => {
           table: 'projects'
         },
         (payload) => {
-          console.log('Real-time update received:', payload);
-          console.log('Event type:', payload.eventType);
-          console.log('Payload data:', payload.new || payload.old);
-
           if (payload.eventType === 'INSERT') {
             const newProject = payload.new as Project;
             setProjects((current) => {
@@ -155,13 +151,10 @@ const Dashboard = () => {
             });
           } else if (payload.eventType === 'UPDATE') {
             const updatedProject = payload.new as Project;
-            console.log('Updating project in state:', updatedProject);
             setProjects((current) => {
-              const updated = current.map((p) =>
+              return current.map((p) =>
                 p.id === updatedProject.id ? updatedProject : p
               );
-              console.log('Updated projects list:', updated);
-              return updated;
             });
             toast({
               title: "✅ Project Updated",
@@ -174,9 +167,7 @@ const Dashboard = () => {
           }
         }
       )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-      });
+      .subscribe();
 
     // Set up real-time subscription for report changes
     const reportsChannel = supabase
@@ -195,11 +186,8 @@ const Dashboard = () => {
       )
       .subscribe();
 
-    console.log('Real-time subscription initialized');
-
     // Cleanup subscription on unmount
     return () => {
-      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(projectsChannel);
       supabase.removeChannel(reportsChannel);
     };
@@ -676,9 +664,8 @@ const Dashboard = () => {
                     </TableHeader>
                     <TableBody>
                       {filteredProjects.map((project) => (
-                        <>
+                        <Fragment key={project.id}>
                           <TableRow
-                            key={project.id}
                             className="cursor-pointer hover:bg-muted/50"
                             onClick={() => setExpandedRow(expandedRow === project.id ? null : project.id)}
                           >
@@ -760,7 +747,7 @@ const Dashboard = () => {
                             </TableCell>
                           </TableRow>
                           {expandedRow === project.id && (
-                            <TableRow key={`${project.id}-details`}>
+                            <TableRow>
                               <TableCell colSpan={9} className="bg-muted/30">
                                 <div className="p-2 sm:p-4 space-y-3">
                                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
@@ -880,7 +867,7 @@ const Dashboard = () => {
                               </TableCell>
                             </TableRow>
                           )}
-                        </>
+                        </Fragment>
                       ))}
                     </TableBody>
                   </Table>
@@ -897,9 +884,6 @@ const Dashboard = () => {
         onOpenChange={setShowEditModal}
         project={selectedProject}
         onSuccess={() => {
-          // Manually reload projects to ensure UI updates
-          // (workaround until real-time is fully configured)
-          console.log('Edit success - reloading projects to update UI');
           loadProjects();
         }}
       />

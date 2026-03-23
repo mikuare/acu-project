@@ -24,20 +24,13 @@ export function useUpdateCheck() {
     // ONLY check for updates on native Android APK
     // DO NOT check on web or PWA
     const platform = Capacitor.getPlatform();
-    console.log(`🔍 Platform detected: ${platform}`);
     
     if (platform !== "android" && platform !== "ios") {
-      console.log("🌐 Web/PWA detected - update check disabled");
       return;
     }
 
-    console.log("📱 Native app detected - will check for updates");
-
     async function checkUpdate() {
       try {
-        console.log("🔍 Checking for updates...");
-        console.log(`📱 Current version: ${CURRENT_VERSION_CODE}`);
-        
         const res = await fetch(UPDATE_JSON_URL, { cache: "no-store" });
         
         if (!res.ok) {
@@ -46,15 +39,8 @@ export function useUpdateCheck() {
         
         const data: UpdateInfo = await res.json();
         
-        console.log("📦 Latest version info:", data);
-        
         if (data.versionCode > CURRENT_VERSION_CODE) {
-          console.log("🎉 Update available!");
-          console.log(`   Current: v${CURRENT_VERSION_CODE}`);
-          console.log(`   Latest: v${data.versionCode} (${data.latestVersion})`);
           setUpdateInfo(data);
-        } else {
-          console.log("✅ App is up to date");
         }
       } catch (err) {
         console.error("❌ Update check failed:", err);

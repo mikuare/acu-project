@@ -43,30 +43,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-          emailRedirectTo: `${window.location.origin}/admin/dashboard`,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        toast({
-          title: "✅ Registration Successful!",
-          description: "Please check your email to confirm your account before signing in.",
-          duration: 2000,
-        });
-      }
+      throw new Error("Admin self-signup is disabled. Contact the system owner to create admin accounts.");
     } catch (error: any) {
       toast({
-        title: "❌ Registration Failed",
-        description: error.message || "An error occurred during registration",
+        title: "❌ Registration Disabled",
+        description: error.message || "Admin self-signup is disabled.",
         variant: "destructive",
         duration: 2000,
       });

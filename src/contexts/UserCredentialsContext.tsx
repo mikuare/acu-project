@@ -40,27 +40,25 @@ export const UserCredentialsProvider = ({ children }: { children: ReactNode }) =
     try {
       // Import supabase client
       const { supabase } = await import('@/integrations/supabase/client');
+      const normalizedUsername = inputUsername.trim();
       
-      // Fetch the user credentials from Supabase
-      const { data, error } = await supabase
-        .from('user_credentials')
-        .select('*')
-        .eq('username', inputUsername)
-        .single();
+      const { data, error } = await (supabase as any).rpc('validate_user_credentials', {
+        input_username: normalizedUsername,
+        input_password: inputPassword,
+      });
 
-      if (error || !data) {
-        console.error('Error fetching user credentials:', error);
+      if (error) {
+        console.error('Error validating user credentials:', error);
         return false;
       }
 
-      // Simple password check (in production, use proper hashing)
-      if (data.password === inputPassword) {
+      if (data === true) {
         setIsUserAuthenticated(true);
-        setUsername(inputUsername);
+        setUsername(normalizedUsername);
         
         // Store in localStorage with timestamp
         localStorage.setItem('regularUserAuth', JSON.stringify({
-          username: inputUsername,
+          username: normalizedUsername,
           timestamp: Date.now()
         }));
         

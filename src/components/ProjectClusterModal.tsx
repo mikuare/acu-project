@@ -1,6 +1,7 @@
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
@@ -54,6 +55,9 @@ const ProjectClusterModal = ({
                         <MapPin className="h-5 w-5 text-[#FF5722]" />
                         Multiple Projects at This Location
                     </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Select one of the projects that share this map location to continue.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-2">

@@ -142,10 +142,7 @@ const SignIn = () => {
               </Button>
 
               <div className="text-sm text-center text-slate-500">
-                Don't have an account?{' '}
-                <Link to="/admin/signup" className="text-orange-600 hover:text-orange-700 hover:underline font-semibold">
-                  Sign Up
-                </Link>
+                Admin self-signup is disabled. Contact the system owner if you need access.
               </div>
             </CardFooter>
           </form>

@@ -22,6 +22,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { getResolvedVerificationAssets, joinStoredUrls } from "@/utils/projectMedia";
+import { hasValidCoordinates, normalizeRouteFeature } from "@/utils/mapData";
 
 interface Project {
     id: string;
@@ -229,12 +230,20 @@ const ImplementationTracker = () => {
 
     const handleNavigate = () => {
         if (!selectedProject) return;
+        if (!hasValidCoordinates(selectedProject)) {
+            toast({
+                variant: "destructive",
+                title: "Invalid project location",
+                description: "This project does not have valid coordinates for navigation.",
+            });
+            return;
+        }
         setShowVpnWarning(true);
     };
 
     const startNavigation = () => {
         setShowVpnWarning(false);
-        if (!selectedProject) return;
+        if (!selectedProject || !hasValidCoordinates(selectedProject)) return;
         if (!mapboxToken) {
             toast({ variant: "destructive", title: "Error", description: "Mapbox token not found" });
             return;
@@ -252,7 +261,11 @@ const ImplementationTracker = () => {
                     );
                     const data = await response.json();
                     if (data.routes && data.routes[0]) {
-                        setRouteData(data.routes[0].geometry);
+                        const routeFeature = normalizeRouteFeature(data.routes[0].geometry);
+                        if (!routeFeature) {
+                            throw new Error("Route geometry is invalid.");
+                        }
+                        setRouteData(routeFeature);
                         toast({ title: "Route calculated", description: "Showing route to project." });
                     }
                 } catch (error) {

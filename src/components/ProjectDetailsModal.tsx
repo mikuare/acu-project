@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -90,6 +90,9 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-6xl h-[90vh] p-0 gap-0 overflow-hidden flex flex-col bg-white dark:bg-slate-900 [&>button]:hidden">
+          <DialogDescription className="sr-only">
+            Review project information, location data, attached images, and project documents.
+          </DialogDescription>
           {/* Header */}
           <div className="bg-[#FF5722] px-6 py-4 flex items-center justify-between shrink-0">
             <DialogTitle className="text-white text-xl font-bold flex items-center gap-2">

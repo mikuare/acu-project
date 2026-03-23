@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Facebook, Twitter, Link, Mail, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -38,6 +38,9 @@ const ShareProjectModal = ({ open, onOpenChange, projectUrl }: ShareProjectModal
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden border-0 bg-white dark:bg-slate-900 [&>button]:hidden">
+                <DialogDescription className="sr-only">
+                    Share the selected project link through social media, email, or by copying the link.
+                </DialogDescription>
                 <div className="flex items-center justify-between px-6 py-4 border-b">
                     <DialogTitle className="text-lg font-semibold">Share Project</DialogTitle>
                     <Button

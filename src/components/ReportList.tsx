@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -228,6 +228,9 @@ const ReportList = () => {
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>Report Details</DialogTitle>
+                        <DialogDescription className="sr-only">
+                            Review the selected project report, attached proofs, and any resolution details.
+                        </DialogDescription>
                     </DialogHeader>
 
                     {selectedReport && (
@@ -347,6 +350,9 @@ const ReportList = () => {
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>Enter Resolution Message</DialogTitle>
+                        <DialogDescription className="sr-only">
+                            Provide the resolution message that will be saved when this report is marked as catered.
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <p className="text-sm text-muted-foreground">

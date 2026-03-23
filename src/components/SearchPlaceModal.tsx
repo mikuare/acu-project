@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -96,6 +96,9 @@ const SearchPlaceModal = ({ open, onOpenChange, onLocationSelect }: SearchPlaceM
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Search Place in Philippines</DialogTitle>
+          <DialogDescription className="sr-only">
+            Search by place name or enter latitude and longitude coordinates to select a location on the map.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">

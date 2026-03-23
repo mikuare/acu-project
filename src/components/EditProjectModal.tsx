@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -332,6 +332,9 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
         <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl">Edit Project Details</DialogTitle>
+            <DialogDescription className="sr-only">
+              Update project information, location, and attached files for the selected project.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">

@@ -4,6 +4,7 @@ import Map, { Marker, NavigationControl, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
 import ProjectClusterModal from './ProjectClusterModal';
+import { hasValidCoordinates, normalizeRouteFeature } from '@/utils/mapData';
 
 // Philippines center coordinates
 const PHILIPPINES_CENTER = {
@@ -127,12 +128,18 @@ const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route
     const mapRef = useRef<any>(null);
     const [showClusterModal, setShowClusterModal] = useState(false);
     const [clusterProjects, setClusterProjects] = useState<Project[]>([]);
+    const validProjects = useMemo(
+        () => projects.filter((project): project is Project => hasValidCoordinates(project)),
+        [projects]
+    );
+    const safeUserLocation = hasValidCoordinates(userLocation) ? userLocation : null;
+    const safeRoute = useMemo(() => normalizeRouteFeature(route), [route]);
 
     // Group projects by coordinates (rounded to 6 decimals to handle minor GPS variations)
     const projectClusters = useMemo(() => {
         const clusters: globalThis.Map<string, Project[]> = new globalThis.Map();
 
-        projects.forEach(project => {
+        validProjects.forEach(project => {
             // Round coordinates to 6 decimal places to group nearby projects
             const key = `${project.latitude.toFixed(6)},${project.longitude.toFixed(6)}`;
             if (!clusters.has(key)) {
@@ -145,12 +152,12 @@ const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route
         });
 
         return clusters;
-    }, [projects]);
+    }, [validProjects]);
 
     // Fly to selected project
     useEffect(() => {
         if (selectedProjectId && mapRef.current) {
-            const selectedProject = projects.find(p => p.id === selectedProjectId);
+            const selectedProject = validProjects.find(p => p.id === selectedProjectId);
             if (selectedProject) {
                 mapRef.current.flyTo({
                     center: [selectedProject.longitude, selectedProject.latitude],
@@ -197,6 +204,8 @@ const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route
                 mapboxAccessToken={mapboxToken}
                 style={{ width: '100%', height: '100%' }}
                 mapStyle="mapbox://styles/mapbox/streets-v12"
+                projection={{ name: 'mercator' }}
+                fog={undefined}
                 maxBounds={[[116.5, 4.5], [126.5, 21.5]]}
                 minZoom={5}
                 maxZoom={19}
@@ -205,8 +214,8 @@ const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route
                 <NavigationControl position="top-right" />
 
                 {/* User Location Marker */}
-                {userLocation && (
-                    <Marker longitude={userLocation.longitude} latitude={userLocation.latitude}>
+                {safeUserLocation && (
+                    <Marker longitude={safeUserLocation.longitude} latitude={safeUserLocation.latitude}>
                         <div className="relative flex items-center justify-center w-6 h-6">
                             <div className="absolute w-full h-full bg-blue-500 rounded-full opacity-30 animate-ping" />
                             <div className="relative w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-md" />
@@ -215,8 +224,8 @@ const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route
                 )}
 
                 {/* Route Line */}
-                {route && (
-                    <Source id="route" type="geojson" data={route}>
+                {safeRoute && (
+                    <Source id="route" type="geojson" data={safeRoute}>
                         <Layer
                             id="route-layer"
                             type="line"

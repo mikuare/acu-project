@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -143,6 +143,9 @@ const ReportProjectModal = ({ open, onOpenChange, project }: ReportProjectModalP
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden gap-0 border-0">
+                <DialogDescription className="sr-only">
+                    Submit a report for this project, including category, message, and optional proof files.
+                </DialogDescription>
                 <div className="bg-[#FF5722] p-4 text-center">
                     <DialogTitle className="text-white text-xl font-bold uppercase tracking-wide">
                         I-REPORT

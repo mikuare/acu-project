@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Navigation, FileText, CheckCircle, MapPin } from "lucide-react";
 
@@ -30,6 +30,9 @@ const ProjectOptionsDialog = ({
                         <MapPin className="w-5 h-5 text-[#FF5722]" />
                         {project.project_id}
                     </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Choose an action for the selected project, including navigation, details, or implementation updates.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="flex flex-col gap-3 py-4">

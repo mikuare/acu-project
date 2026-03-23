@@ -16,10 +16,7 @@ const UpdatePrompt = ({ updateInfo }: UpdatePromptProps) => {
 
   // Show with slide-in animation after mount
   useEffect(() => {
-    console.log("🎨 UpdatePrompt mounted!");
-    console.log("📦 Update info:", updateInfo);
     const showTimer = setTimeout(() => {
-      console.log("✨ Making notification visible now!");
       setIsVisible(true);
     }, 100);
     return () => clearTimeout(showTimer);
@@ -51,8 +48,6 @@ const UpdatePrompt = ({ updateInfo }: UpdatePromptProps) => {
 
   const handleDownload = async () => {
     try {
-      console.log("📥 Opening download link:", updateInfo.apkUrl);
-
       if (Capacitor.isNativePlatform()) {
         // Open in external browser for download
         await Browser.open({
