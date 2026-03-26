@@ -43,13 +43,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      throw new Error("Admin self-signup is disabled. Contact the system owner to create admin accounts.");
+      throw new Error("Admin self-signup is disabled. Contact the system owner for access.");
     } catch (error: any) {
       toast({
         title: "❌ Registration Disabled",
         description: error.message || "Admin self-signup is disabled.",
         variant: "destructive",
-        duration: 2000,
+        duration: 2500,
       });
       throw error;
     }
@@ -65,6 +65,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) throw error;
 
       if (data.user) {
+        if (!data.user.email_confirmed_at) {
+          await supabase.auth.signOut();
+          throw new Error("Please confirm your email address before signing in.");
+        }
+
         toast({
           title: "✅ Welcome Back!",
           description: "Successfully signed in",

@@ -132,7 +132,12 @@ const ReportList = () => {
             return;
         }
 
-        const adminName = user?.user_metadata?.full_name || user?.email || 'Admin';
+        const adminName =
+          user?.user_metadata?.full_name ||
+          user?.user_metadata?.display_name ||
+          user?.user_metadata?.name ||
+          user?.email ||
+          'Admin';
 
         if (selectedReport) {
             handleStatusUpdate(selectedReport.id, 'catered', resolutionMessage, adminName);

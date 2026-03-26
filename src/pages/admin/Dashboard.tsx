@@ -273,7 +273,7 @@ const Dashboard = () => {
                     <span className="hidden md:inline">Admin Dashboard</span>
                   </h1>
                   <span className="text-xs text-muted-foreground truncate hidden sm:inline-block">
-                    Welcome, {user?.user_metadata?.full_name || user?.email}
+                    Welcome, {user?.user_metadata?.full_name || user?.user_metadata?.display_name || user?.user_metadata?.name || user?.email}
                   </span>
                 </div>
               </div>

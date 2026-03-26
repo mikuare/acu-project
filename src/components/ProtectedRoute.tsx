@@ -24,6 +24,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <Navigate to="/admin/signin" replace />;
   }
 
+  if (!user.email_confirmed_at) {
+    return <Navigate to="/admin/signin" replace />;
+  }
+
   return <>{children}</>;
 };
 

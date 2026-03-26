@@ -7,6 +7,10 @@ import { Label } from '@/components/ui/label';
 import { UserPlus, Mail, Lock, User, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { toast } from '@/hooks/use-toast';
+
+const SIGNUP_COOLDOWN_MS = 60 * 1000;
+const SIGNUP_COOLDOWN_KEY = 'admin_signup_last_attempt_at';
 
 const SignUp = () => {
   const [fullName, setFullName] = useState('');
@@ -57,7 +61,21 @@ const SignUp = () => {
       return;
     }
 
+    const lastAttempt = Number(localStorage.getItem(SIGNUP_COOLDOWN_KEY) || '0');
+    const elapsed = Date.now() - lastAttempt;
+    if (elapsed < SIGNUP_COOLDOWN_MS) {
+      const waitSeconds = Math.ceil((SIGNUP_COOLDOWN_MS - elapsed) / 1000);
+      toast({
+        title: "⏳ Please Wait",
+        description: `Please wait ${waitSeconds} seconds before trying again.`,
+        variant: "destructive",
+        duration: 2500,
+      });
+      return;
+    }
+
     setIsLoading(true);
+    localStorage.setItem(SIGNUP_COOLDOWN_KEY, String(Date.now()));
     try {
       await signUp(email, password, fullName);
       // Navigate to sign in after successful signup

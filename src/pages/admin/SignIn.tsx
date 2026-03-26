@@ -144,7 +144,7 @@ const SignIn = () => {
               </Button>
 
               <div className="text-sm text-center text-slate-500">
-                Admin self-signup is disabled. Contact the system owner if you need access.
+                Admin self-signup is disabled. Contact the system owner for access.
               </div>
             </CardFooter>
           </form>
