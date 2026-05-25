@@ -56,6 +56,8 @@ const branchColors = {
   QMB: { bg: "bg-[#DC2626]", text: "text-[#DC2626]", border: "border-[#DC2626]" },
 };
 
+const DOCUMENT_ACCEPT_TYPES = ".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip,application/zip,application/x-zip-compressed";
+
 const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjectModalProps) => {
   const { projectStatuses } = useAppSettings();
   const [projectId, setProjectId] = useState("");
@@ -585,8 +587,8 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
                 </div>
               )}
               <div>
-                <Input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleDocumentUpload} className="cursor-pointer" />
-                <p className="text-xs text-muted-foreground mt-1">Upload new documents or keep existing ones</p>
+                <Input type="file" multiple accept={DOCUMENT_ACCEPT_TYPES} onChange={handleDocumentUpload} className="cursor-pointer" />
+                <p className="text-xs text-muted-foreground mt-1">Upload new documents or keep existing ones. Supported files: PDF, Word, Excel, text, CSV, and ZIP.</p>
               </div>
             </div>
 

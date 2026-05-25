@@ -27,6 +27,8 @@ const branchColors = {
   QMB: { bg: "bg-[#DC2626]", text: "text-[#DC2626]", border: "border-[#DC2626]" },    // Bright Red
 };
 
+const DOCUMENT_ACCEPT_TYPES = ".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip,application/zip,application/x-zip-compressed";
+
 const normalizeLocationText = (value: string) =>
   value
     .toLowerCase()
@@ -712,13 +714,16 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
               <Input
                 id="documents"
                 type="file"
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+                accept={DOCUMENT_ACCEPT_TYPES}
                 multiple
                 onChange={handleDocumentChange}
                 className="cursor-pointer flex-1"
                 disabled={documentFiles.length >= MAX_DOCS}
               />
             </div>
+            <p className="text-xs text-muted-foreground">
+              Supported files: PDF, Word, Excel, text, CSV, and ZIP.
+            </p>
             {documentFiles.length > 0 && (
               <div className="space-y-2">
                 {documentFiles.map((file, index) => (
