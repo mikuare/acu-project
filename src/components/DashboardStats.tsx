@@ -272,16 +272,16 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
                     bubbleColor="bg-orange-600"
                 />
                 <StatCard
-                    title="Implemented Projects"
+                    title="Completed Projects"
                     subtitle="Build as specified"
                     count={stats.implemented}
                     percentage={getPercentage(stats.implemented)}
                     color={{ bg: "bg-green-50", text: "text-green-600", iconBg: "bg-green-100" }}
                     icon={CheckCircle2}
                     breakdown={stats.breakdowns.implemented}
-                    isActive={currentStatus === 'implemented'}
-                    isDimmed={currentStatus !== 'all' && currentStatus !== 'implemented'}
-                    onClick={() => onStatusChange('implemented')}
+                    isActive={currentStatus === 'completed'}
+                    isDimmed={currentStatus !== 'all' && currentStatus !== 'completed'}
+                    onClick={() => onStatusChange('completed')}
                     bubbleColor="bg-green-600"
                 />
 

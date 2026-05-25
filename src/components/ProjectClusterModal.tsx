@@ -34,6 +34,7 @@ const branchColors = {
 
 const statusColors = {
     ongoing: "bg-orange-500 text-white",
+    completed: "bg-red-500 text-white",
     implemented: "bg-green-500 text-white",
 };
 
@@ -82,9 +83,7 @@ const ProjectClusterModal = ({
                                             </Badge>
                                             <Badge
                                                 className={
-                                                    project.status === 'implemented'
-                                                        ? statusColors.implemented
-                                                        : statusColors.ongoing
+                                                    statusColors[project.status as keyof typeof statusColors] || statusColors.ongoing
                                                 }
                                             >
                                                 {project.status}

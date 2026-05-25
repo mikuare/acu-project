@@ -38,7 +38,7 @@ const ChatBot = ({ projects }: ChatBotProps) => {
     const calculateStats = () => {
         const total = projects.length;
         const ongoing = projects.filter(p => p.status === 'ongoing').length;
-        const implemented = projects.filter(p => p.status === 'implemented').length;
+        const implemented = projects.filter(p => p.status === 'completed' || p.status === 'implemented').length;
         const totalCost = projects.reduce((sum, p) => sum + (p.contract_cost || 0), 0);
 
         return { total, ongoing, implemented, totalCost };
@@ -97,7 +97,7 @@ const ChatBot = ({ projects }: ChatBotProps) => {
             lowerText.includes("filter") ||
             lowerText.includes("sort")
         ) {
-            return "You can use the search bar at the top to find projects by ID, description, province, or region. Use the dropdown filters to narrow down by:\n• Year\n• Category\n• Region/Province\n• Status (Ongoing, Implemented, etc.)";
+            return "You can use the search bar at the top to find projects by ID, description, province, or region. Use the dropdown filters to narrow down by:\n• Year\n• Category\n• Region/Province\n• Status (Ongoing, Completed, etc.)";
         }
 
         // Project Details & Table
@@ -131,7 +131,7 @@ const ChatBot = ({ projects }: ChatBotProps) => {
         }
 
         if (lowerText.includes("implemented") || lowerText.includes("completed") || lowerText.includes("finish") || lowerText.includes("done")) {
-            return `There are ${stats.implemented} implemented projects so far.`;
+            return `There are ${stats.implemented} completed projects so far.`;
         }
 
         if (lowerText.includes("total project") || lowerText.includes("how many project") || lowerText.includes("count")) {

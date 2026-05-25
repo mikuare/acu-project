@@ -162,7 +162,11 @@ const Index = () => {
     }
 
     if (currentStatus && currentStatus !== 'all') {
-      result = result.filter(p => p.status === currentStatus);
+      result = result.filter(p =>
+        currentStatus === 'completed'
+          ? p.status === 'completed' || p.status === 'implemented'
+          : p.status === currentStatus
+      );
     }
 
     setFilteredProjects(result);

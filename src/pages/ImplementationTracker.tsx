@@ -128,7 +128,7 @@ const ImplementationTracker = () => {
             // 4. Merge data
             const mergedProjects = (projectsData || []).map(p => {
                 const impl = implMap.get(p.id);
-                const mergedStatus = impl?.status || p.status;
+                const mergedStatus = impl?.status === 'implemented' ? 'implemented' : 'ongoing';
                 const verification = getResolvedVerificationAssets({
                     status: mergedStatus,
                     image_url: p.image_url,
@@ -590,7 +590,7 @@ const ImplementationTracker = () => {
 
                 <div className="flex-1 min-w-0">
                     <h1 className="text-base sm:text-xl font-bold truncate">Project Implementation</h1>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate hidden sm:block">Mark projects as implemented with verification</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate hidden sm:block">Training-only tracker for projects marked as implemented</p>
                 </div>
             </header>
 

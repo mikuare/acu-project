@@ -86,11 +86,12 @@ export const DEFAULT_PROJECT_CATEGORIES: ProjectCategoryConfig[] = [
 
 export const DEFAULT_PROJECT_STATUSES: ProjectStatusConfig[] = [
     { value: "ongoing", label: "Ongoing" },
-    { value: "implemented", label: "Implemented" },
+    { value: "completed", label: "Completed" },
 ];
 
 export const STATUS_ICON_OPTIONS: Array<{ value: string; label: string; icon: LucideIcon }> = [
     { value: "ongoing", label: "Ongoing", icon: Clock },
+    { value: "completed", label: "Completed", icon: CheckCircle },
     { value: "implemented", label: "Implemented", icon: CheckCircle },
     { value: "not_started", label: "Not Started", icon: Circle },
     { value: "paused", label: "Paused", icon: PauseCircle },

@@ -9,7 +9,7 @@ VALUES
   ),
   (
     'project_statuses',
-    '[{"value":"ongoing","label":"Ongoing"},{"value":"implemented","label":"Implemented"}]',
+    '[{"value":"ongoing","label":"Ongoing"},{"value":"completed","label":"Completed"}]',
     'Configurable project statuses'
   )
 ON CONFLICT (setting_key) DO NOTHING;

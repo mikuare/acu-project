@@ -2,7 +2,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area"; // Use ScrollArea if available, or just div
-import { useAppSettings } from "@/contexts/AppSettingsContext";
 
 // Define Project interface locally or import if shared. 
 // Since it's specific to the tracker page structure, I'll accept 'any' or define a compatible subset.
@@ -38,6 +37,11 @@ const branchColors: Record<string, string> = {
     QMB: "bg-[#DC2626] text-white",
 };
 
+const trackerStatuses = [
+    { value: "ongoing", label: "Ongoing" },
+    { value: "implemented", label: "Implemented" },
+];
+
 const ProjectListSidebar = ({
     projects,
     filteredProjects,
@@ -53,8 +57,6 @@ const ProjectListSidebar = ({
     setSortBy,
     isLoading
 }: ProjectListSidebarProps) => {
-    const { projectStatuses } = useAppSettings();
-
     return (
         <div className="relative flex flex-col h-full bg-card">
             {/* Search and Filters - Fixed Header */}
@@ -79,7 +81,7 @@ const ProjectListSidebar = ({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Status</SelectItem>
-                                {projectStatuses.map((status) => (
+                                {trackerStatuses.map((status) => (
                                     <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>
                                 ))}
                             </SelectContent>
@@ -153,7 +155,7 @@ const ProjectListSidebar = ({
                                         ? 'bg-green-100 text-green-700'
                                         : 'bg-orange-100 text-orange-700'
                                         }`}>
-                                        {project.status}
+                                        {project.status === 'implemented' ? 'implemented' : 'ongoing'}
                                     </span>
                                     {project.status === 'implemented' && project.has_verification && (
                                         <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">

@@ -33,6 +33,7 @@ const branchColors = {
 const statusColors = {
     not_started: "bg-slate-500",
     ongoing: "bg-blue-500",
+    completed: "bg-red-500",
     implemented: "bg-green-500",
     terminated: "bg-red-500",
     active: "bg-green-500",
