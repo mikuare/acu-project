@@ -3,8 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search, X, Filter, Map as MapIcon, LayoutList, MapPin, Calendar } from "lucide-react";
-import { PROJECT_CATEGORIES, REGIONS, PROVINCES_BY_REGION, Region } from '@/utils/philippineData';
+import { REGIONS, PROVINCES_BY_REGION, Region } from '@/utils/philippineData';
 import { getCategoryIcon } from '@/utils/categoryIcons';
+import { useAppSettings } from '@/contexts/AppSettingsContext';
 
 export interface FilterState {
     search: string;
@@ -25,6 +26,7 @@ interface SearchFiltersProps {
 }
 
 const SearchFilters = ({ onFilterChange, availableYears, viewMode, onViewModeChange, className = "", currentStatus }: SearchFiltersProps) => {
+    const { projectCategories } = useAppSettings();
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState("all");
     const [region, setRegion] = useState("all");
@@ -107,13 +109,13 @@ const SearchFilters = ({ onFilterChange, availableYears, viewMode, onViewModeCha
                                     <span>All</span>
                                 </div>
                             </SelectItem>
-                            {PROJECT_CATEGORIES.map((cat) => {
-                                const Icon = getCategoryIcon(cat);
+                            {projectCategories.map((cat) => {
+                                const Icon = getCategoryIcon(cat.label, projectCategories);
                                 return (
-                                    <SelectItem key={cat} value={cat}>
+                                    <SelectItem key={cat.label} value={cat.label}>
                                         <div className="flex items-center gap-2">
                                             <Icon className="w-4 h-4 text-muted-foreground" />
-                                            <span>{cat}</span>
+                                            <span>{cat.label}</span>
                                         </div>
                                     </SelectItem>
                                 );

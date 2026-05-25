@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area"; // Use ScrollArea if available, or just div
+import { useAppSettings } from "@/contexts/AppSettingsContext";
 
 // Define Project interface locally or import if shared. 
 // Since it's specific to the tracker page structure, I'll accept 'any' or define a compatible subset.
@@ -52,6 +53,8 @@ const ProjectListSidebar = ({
     setSortBy,
     isLoading
 }: ProjectListSidebarProps) => {
+    const { projectStatuses } = useAppSettings();
+
     return (
         <div className="relative flex flex-col h-full bg-card">
             {/* Search and Filters - Fixed Header */}
@@ -76,8 +79,9 @@ const ProjectListSidebar = ({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Status</SelectItem>
-                                <SelectItem value="ongoing">Ongoing</SelectItem>
-                                <SelectItem value="implemented">Implemented</SelectItem>
+                                {projectStatuses.map((status) => (
+                                    <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
 

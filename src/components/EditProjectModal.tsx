@@ -15,6 +15,7 @@ import ImageViewerModal from "./ImageViewerModal";
 import { optimizeImageFile } from "@/utils/optimizeImageFile";
 import { joinStoredUrls, splitStoredUrls } from "@/utils/projectMedia";
 import { optimizeStoredImages } from "@/utils/optimizeStoredImages";
+import { useAppSettings } from "@/contexts/AppSettingsContext";
 
 interface Project {
   id: string;
@@ -56,6 +57,7 @@ const branchColors = {
 };
 
 const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjectModalProps) => {
+  const { projectStatuses } = useAppSettings();
   const [projectId, setProjectId] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("not_started");
@@ -392,8 +394,9 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ongoing">Ongoing</SelectItem>
-                    <SelectItem value="implemented">Implemented</SelectItem>
+                    {projectStatuses.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

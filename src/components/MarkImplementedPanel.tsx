@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getResolvedVerificationAssets, joinStoredUrls } from "@/utils/projectMedia";
 import { optimizeImageFile } from "@/utils/optimizeImageFile";
 import { optimizeStoredImages } from "@/utils/optimizeStoredImages";
+import { useAppSettings } from "@/contexts/AppSettingsContext";
 
 interface Project {
     id: string;
@@ -44,6 +45,7 @@ const branchColors = {
 };
 
 const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedPanelProps) => {
+    const { projectStatuses } = useAppSettings();
     const resolvedVerification = getResolvedVerificationAssets({
         status: project?.status,
         image_url: project?.image_url,
@@ -294,8 +296,9 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                                         <SelectValue placeholder="Status" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="ongoing">Ongoing</SelectItem>
-                                        <SelectItem value="implemented">Implemented</SelectItem>
+                                        {projectStatuses.map((item) => (
+                                            <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             ) : (

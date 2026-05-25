@@ -8,6 +8,16 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Copy, Eye, EyeOff, KeyRound, Map as MapIcon, Lock, LockOpen, Shield, Loader2, CircleCheck, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  CATEGORY_ICON_OPTIONS,
+  DEFAULT_PROJECT_CATEGORIES,
+  DEFAULT_PROJECT_STATUSES,
+  ProjectCategoryConfig,
+  ProjectStatusConfig,
+  normalizeProjectCategories,
+  normalizeProjectStatuses,
+  normalizeStatusValue,
+} from '@/utils/categoryIcons';
 
 interface MapLockSettingsProps {
   open: boolean;
@@ -39,11 +49,24 @@ const maskToken = (token: string) => {
 };
 
 const MapLockSettings = ({ open, onOpenChange }: MapLockSettingsProps) => {
-  const { isMapLocked, setMapLock, mapboxToken, updateMapboxToken, isLoading } = useAppSettings();
+  const {
+    isMapLocked,
+    setMapLock,
+    mapboxToken,
+    updateMapboxToken,
+    projectCategories,
+    projectStatuses,
+    updateProjectCategories,
+    updateProjectStatuses,
+    isLoading
+  } = useAppSettings();
   const [saving, setSaving] = useState(false);
   const [savingToken, setSavingToken] = useState(false);
+  const [savingLists, setSavingLists] = useState(false);
   const [localLockState, setLocalLockState] = useState(isMapLocked);
   const [localToken, setLocalToken] = useState('');
+  const [localCategories, setLocalCategories] = useState<ProjectCategoryConfig[]>(DEFAULT_PROJECT_CATEGORIES);
+  const [localStatuses, setLocalStatuses] = useState<ProjectStatusConfig[]>(DEFAULT_PROJECT_STATUSES);
   const [configPassword, setConfigPassword] = useState('');
   const [isConfigUnlocked, setIsConfigUnlocked] = useState(false);
   const [isCheckingPassword, setIsCheckingPassword] = useState(false);
@@ -52,11 +75,13 @@ const MapLockSettings = ({ open, onOpenChange }: MapLockSettingsProps) => {
   useEffect(() => {
     if (open) {
       setLocalToken(mapboxToken || '');
+      setLocalCategories(projectCategories);
+      setLocalStatuses(projectStatuses);
       setConfigPassword('');
       setIsConfigUnlocked(false);
       setShowToken(false);
     }
-  }, [mapboxToken, open]);
+  }, [mapboxToken, open, projectCategories, projectStatuses]);
 
   useEffect(() => {
     setLocalLockState(isMapLocked);
@@ -194,6 +219,66 @@ const MapLockSettings = ({ open, onOpenChange }: MapLockSettingsProps) => {
     }
   };
 
+  const updateCategoryAt = (index: number, updates: Partial<ProjectCategoryConfig>) => {
+    setLocalCategories((current) =>
+      current.map((category, categoryIndex) =>
+        categoryIndex === index ? { ...category, ...updates } : category
+      )
+    );
+  };
+
+  const updateStatusAt = (index: number, updates: Partial<ProjectStatusConfig>) => {
+    setLocalStatuses((current) =>
+      current.map((status, statusIndex) => {
+        if (statusIndex !== index) return status;
+
+        const next = { ...status, ...updates };
+        if (updates.label && !updates.value) {
+          next.value = normalizeStatusValue(updates.label);
+        }
+        return next;
+      })
+    );
+  };
+
+  const handleSaveLists = async () => {
+    const categories = normalizeProjectCategories(localCategories);
+    const statuses = normalizeProjectStatuses(localStatuses);
+
+    setSavingLists(true);
+    try {
+      const [categoriesSaved, statusesSaved] = await Promise.all([
+        updateProjectCategories(categories),
+        updateProjectStatuses(statuses),
+      ]);
+
+      if (!categoriesSaved || !statusesSaved) {
+        toast({
+          title: "❌ Error",
+          description: "Failed to save category or status configuration",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setLocalCategories(categories);
+      setLocalStatuses(statuses);
+      toast({
+        title: "✅ Configuration Saved",
+        description: "Project categories and statuses were updated.",
+      });
+    } catch (error) {
+      console.error('Error saving project lists:', error);
+      toast({
+        title: "❌ Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingLists(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden gap-0 border bg-background shadow-lg sm:rounded-lg">
@@ -215,9 +300,10 @@ const MapLockSettings = ({ open, onOpenChange }: MapLockSettingsProps) => {
         ) : (
           <Tabs defaultValue="access" className="w-full">
             <div className="px-6 border-b">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="access">Access</TabsTrigger>
-                <TabsTrigger value="config">Configuration</TabsTrigger>
+                <TabsTrigger value="config">Mapbox</TabsTrigger>
+                <TabsTrigger value="lists">Lists</TabsTrigger>
               </TabsList>
             </div>
 
@@ -442,6 +528,137 @@ const MapLockSettings = ({ open, onOpenChange }: MapLockSettingsProps) => {
                 </div>
 
               </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="lists" className="p-0 m-0 focus-visible:ring-0">
+              {!isConfigUnlocked ? (
+                <div className="flex flex-col p-6 space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                      <Lock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-base">Configuration Locked</h3>
+                      <p className="text-sm text-muted-foreground">Unlock the configuration tab first to manage categories and statuses.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                  <div>
+                    <h3 className="font-semibold text-base">Project Categories</h3>
+                    <p className="text-sm text-muted-foreground">Edit category names and their icons.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {localCategories.map((category, index) => {
+                      const Icon = CATEGORY_ICON_OPTIONS.find((option) => option.value === category.icon)?.icon || MapIcon;
+
+                      return (
+                        <div key={`${category.label}-${index}`} className="grid grid-cols-[1fr_150px_auto] gap-2 items-center">
+                          <Input
+                            value={category.label}
+                            onChange={(e) => updateCategoryAt(index, { label: e.target.value })}
+                            placeholder="Category name"
+                          />
+                          <select
+                            value={category.icon}
+                            onChange={(e) => updateCategoryAt(index, { icon: e.target.value })}
+                            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          >
+                            {CATEGORY_ICON_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                          </select>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setLocalCategories((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                            disabled={localCategories.length <= 1}
+                            title="Delete category"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                          <div className="col-span-3 flex items-center gap-2 text-xs text-muted-foreground">
+                            <Icon className="w-4 h-4" />
+                            <span>Icon preview</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setLocalCategories((current) => [...current, { label: "New Category", icon: "construction" }])}
+                    >
+                      Add Category
+                    </Button>
+                  </div>
+
+                  <div className="border-t pt-5">
+                    <h3 className="font-semibold text-base">Project Statuses</h3>
+                    <p className="text-sm text-muted-foreground">Edit status labels and saved values.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {localStatuses.map((status, index) => (
+                      <div key={`${status.value}-${index}`} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
+                        <Input
+                          value={status.label}
+                          onChange={(e) => updateStatusAt(index, { label: e.target.value })}
+                          placeholder="Status label"
+                        />
+                        <Input
+                          value={status.value}
+                          onChange={(e) => updateStatusAt(index, { value: normalizeStatusValue(e.target.value) })}
+                          placeholder="status_value"
+                          className="font-mono text-xs"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setLocalStatuses((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                          disabled={localStatuses.length <= 1}
+                          title="Delete status"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setLocalStatuses((current) => [...current, { label: "New Status", value: "new_status" }])}
+                    >
+                      Add Status
+                    </Button>
+                  </div>
+
+                  <Button
+                    onClick={handleSaveLists}
+                    disabled={savingLists}
+                    className="w-full gap-2"
+                  >
+                    {savingLists ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <CircleCheck className="w-4 h-4" />
+                        Save Category and Status Lists
+                      </>
+                    )}
+                  </Button>
+                </div>
               )}
             </TabsContent>
           </Tabs>

@@ -9,8 +9,9 @@ import { CalendarIcon, Upload, X, Camera, FileText, MapPin, Loader2 } from "luci
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { PROJECT_CATEGORIES, REGIONS, PROVINCES_BY_REGION, Region, getRegionForProvince } from "@/utils/philippineData";
+import { REGIONS, PROVINCES_BY_REGION, Region, getRegionForProvince } from "@/utils/philippineData";
 import { optimizeImageFile } from "@/utils/optimizeImageFile";
+import { useAppSettings } from "@/contexts/AppSettingsContext";
 
 interface ProjectFormModalProps {
   open: boolean;
@@ -84,6 +85,7 @@ const findProvinceInText = (candidates: string[]) => {
 };
 
 const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }: ProjectFormModalProps) => {
+  const { projectCategories, projectStatuses } = useAppSettings();
   const [projectId, setProjectId] = useState("");
   const [description, setDescription] = useState("");
 
@@ -125,6 +127,12 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
       detectLocation(latitude, longitude);
     }
   }, [open, latitude, longitude]);
+
+  useEffect(() => {
+    if (projectStatuses.length > 0 && !projectStatuses.some((item) => item.value === status)) {
+      setStatus(projectStatuses[0].value);
+    }
+  }, [projectStatuses, status]);
 
   const detectLocation = async (lat: number, lng: number) => {
     setIsLocating(true);
@@ -742,8 +750,8 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PROJECT_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  {projectCategories.map((cat) => (
+                    <SelectItem key={cat.label} value={cat.label}>{cat.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -756,8 +764,9 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ongoing">Ongoing</SelectItem>
-                  <SelectItem value="implemented">Implemented</SelectItem>
+                  {projectStatuses.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

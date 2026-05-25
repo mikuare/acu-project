@@ -5,6 +5,7 @@ import { X, MapPin, ArrowRight, Info, FileText, CheckCircle2 } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { getCategoryIcon } from "@/utils/categoryIcons";
 import { useState } from "react";
+import { useAppSettings } from "@/contexts/AppSettingsContext";
 
 interface Project {
     id: string;
@@ -41,11 +42,12 @@ const branchColors = {
 };
 
 const ProjectMapOverlay = ({ project, onClose, onViewFullDetails, className }: ProjectMapOverlayProps) => {
+    const { projectCategories } = useAppSettings();
     const [isMinimized, setIsMinimized] = useState(false);
 
     if (!project) return null;
 
-    const CategoryIcon = getCategoryIcon(project.category_type || "");
+    const CategoryIcon = getCategoryIcon(project.category_type || "", projectCategories);
     const headerColor = branchColors[project.branch as keyof typeof branchColors] || "bg-primary";
 
     return (
