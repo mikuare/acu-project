@@ -203,6 +203,8 @@ const ImplementationTracker = () => {
             result = result.filter(p =>
                 p.project_id?.toLowerCase().includes(query) ||
                 p.description?.toLowerCase().includes(query) ||
+                p.user_name?.toLowerCase().includes(query) ||
+                p.timekeeper_name?.toLowerCase().includes(query) ||
                 p.branch?.toLowerCase().includes(query)
             );
         }

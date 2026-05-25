@@ -122,6 +122,8 @@ const Index = () => {
       result = result.filter(p =>
         p.project_id?.toLowerCase().includes(searchLower) ||
         p.description?.toLowerCase().includes(searchLower) ||
+        p.engineer_name?.toLowerCase().includes(searchLower) ||
+        p.user_name?.toLowerCase().includes(searchLower) ||
         p.province?.toLowerCase().includes(searchLower) ||
         p.region?.toLowerCase().includes(searchLower) ||
         p.branch?.toLowerCase().includes(searchLower)

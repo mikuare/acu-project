@@ -25,6 +25,8 @@ const PHILIPPINES_CENTER = {
   zoom: 6,
 };
 
+type TemporaryMarkerSource = 'gps' | 'pin' | 'search';
+
 // Branch-specific marker colors
 const branchColors = {
   ADC: '#006D5B',    // Green
@@ -99,6 +101,7 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; name?: string } | null>(null);
   const [isPinMode, setIsPinMode] = useState(false);
   const [tempMarker, setTempMarker] = useState<{ longitude: number; latitude: number } | null>(null);
+  const [tempMarkerSource, setTempMarkerSource] = useState<TemporaryMarkerSource | null>(null);
   const [highlightMarker, setHighlightMarker] = useState<{ longitude: number; latitude: number; animate: boolean } | null>(null);
 
   const [viewState, setViewState] = useState(PHILIPPINES_CENTER);
@@ -223,6 +226,7 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
 
     // Set marker and open project form
     setTempMarker({ longitude, latitude });
+    setTempMarkerSource('gps');
     setSelectedLocation({ lat: latitude, lng: longitude });
     setShowProjectForm(true);
   };
@@ -445,6 +449,7 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
     });
 
     setTempMarker({ longitude: lng, latitude: lat });
+    setTempMarkerSource('search');
     setSelectedLocation({ lat, lng, name: placeName });
     setShowLocationConfirm(true);
   };
@@ -458,12 +463,14 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
   const handleCancelLocation = () => {
     setShowLocationConfirm(false);
     setTempMarker(null);
+    setTempMarkerSource(null);
     setSelectedLocation(null);
   };
 
   // Handle project form success
   const handleProjectSuccess = () => {
     setTempMarker(null);
+    setTempMarkerSource(null);
     setSelectedLocation(null);
     setShowProjectForm(false);
     if (onProjectUpdate) {
@@ -478,10 +485,22 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
     const { lng, lat } = event.lngLat;
 
     setTempMarker({ longitude: lng, latitude: lat });
+    setTempMarkerSource('pin');
     setSelectedLocation({ lat, lng });
     setShowLocationConfirm(true);
     setIsPinMode(false);
   }, [isPinMode]);
+
+  const handleTempMarkerClick = (event: any) => {
+    event.originalEvent.stopPropagation();
+
+    if (tempMarkerSource !== 'search' || !selectedLocation) {
+      return;
+    }
+
+    setShowLocationConfirm(false);
+    setShowProjectForm(true);
+  };
 
   // Cleanup geolocation watchers on unmount
   useEffect(() => {
@@ -619,6 +638,7 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
             longitude={tempMarker.longitude}
             latitude={tempMarker.latitude}
             anchor="bottom"
+            onClick={handleTempMarkerClick}
           >
             <CustomMarker color="#3b82f6" size={45} />
           </Marker>

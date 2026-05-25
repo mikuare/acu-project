@@ -78,6 +78,7 @@ const Dashboard = () => {
     return (
       project.project_id.toLowerCase().includes(searchLower) ||
       project.description.toLowerCase().includes(searchLower) ||
+      project.user_name.toLowerCase().includes(searchLower) ||
       project.branch.toLowerCase().includes(searchLower) ||
       (project.province && project.province.toLowerCase().includes(searchLower)) ||
       (project.region && project.region.toLowerCase().includes(searchLower))
@@ -482,9 +483,17 @@ const Dashboard = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by Branch, Project ID, Location or Description..."
+                  id="admin-project-search"
+                  name="admin-project-search"
+                  type="search"
+                  placeholder="Search by time keeper/checker, branch, project ID, location or description..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  data-lpignore="true"
+                  data-1p-ignore="true"
                   className="pl-9"
                 />
               </div>

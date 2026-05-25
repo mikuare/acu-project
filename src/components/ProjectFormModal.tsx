@@ -26,6 +26,63 @@ const branchColors = {
   QMB: { bg: "bg-[#DC2626]", text: "text-[#DC2626]", border: "border-[#DC2626]" },    // Bright Red
 };
 
+const normalizeLocationText = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[–—‑-]/g, " ")
+    .replace(/\bprovince\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const getRegionAliasParts = (region: Region) => {
+  const normalized = normalizeLocationText(region);
+
+  return [
+    normalized,
+    normalizeLocationText(region.replace(/^Region\s+[IVX]+(?:\s+)?/i, "")),
+    normalizeLocationText(region.replace(/^[^-–—‑]+[-–—‑]\s*/i, "")),
+  ].filter(Boolean);
+};
+
+const findRegionInText = (candidates: string[]): Region | null => {
+  const normalizedCandidates = candidates.map(normalizeLocationText).filter(Boolean);
+
+  for (const region of REGIONS) {
+    const aliases = getRegionAliasParts(region);
+    if (
+      normalizedCandidates.some(candidate =>
+        aliases.some(alias => candidate === alias || candidate.includes(alias) || alias.includes(candidate))
+      )
+    ) {
+      return region;
+    }
+  }
+
+  return null;
+};
+
+const findProvinceInText = (candidates: string[]) => {
+  const normalizedCandidates = candidates.map(normalizeLocationText).filter(Boolean);
+  const provinces = Object.values(PROVINCES_BY_REGION).flat();
+
+  for (const province of provinces) {
+    const normalizedProvince = normalizeLocationText(province);
+    if (
+      normalizedCandidates.some(candidate =>
+        candidate === normalizedProvince ||
+        candidate.includes(normalizedProvince) ||
+        normalizedProvince.includes(candidate)
+      )
+    ) {
+      return province;
+    }
+  }
+
+  return null;
+};
+
 const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }: ProjectFormModalProps) => {
   const [projectId, setProjectId] = useState("");
   const [description, setDescription] = useState("");
@@ -77,51 +134,66 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
 
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
       );
       const data = await response.json();
 
       if (data.address) {
-        // Try to find province in address fields
-        const detectedProvince = data.address.province || data.address.state || data.address.region;
+        const address = data.address;
+        const locationCandidates = [
+          address.province,
+          address.state_district,
+          address.county,
+          address.city,
+          address.municipality,
+          address.town,
+          address.village,
+          address.suburb,
+          address.region,
+          address.state,
+          data.display_name,
+        ].filter((value): value is string => Boolean(value));
+
+        const detectedProvince = findProvinceInText(locationCandidates);
+        const detectedRegion = detectedProvince
+          ? getRegionForProvince(detectedProvince)
+          : findRegionInText(locationCandidates);
+
+        if (detectedRegion) {
+          setRegion(detectedRegion);
+        }
 
         if (detectedProvince) {
-          // Clean up province name (remove "Province" suffix if present)
-          const cleanProvince = detectedProvince.replace(" Province", "").trim();
-
-          // Attempt to find matching region
-          const detectedRegion = getRegionForProvince(cleanProvince);
-
-          if (detectedRegion) {
-            setRegion(detectedRegion);
-            setProvince(cleanProvince);
-          } else {
-            // Fallback: Try to match province directly against our list
-            let found = false;
-            for (const [reg, provs] of Object.entries(PROVINCES_BY_REGION)) {
-              if (provs.some(p => cleanProvince.includes(p) || p.includes(cleanProvince))) {
-                setRegion(reg);
-                // Find the exact province name from our list
-                const exactProv = provs.find(p => cleanProvince.includes(p) || p.includes(cleanProvince));
-                setProvince(exactProv || cleanProvince);
-                found = true;
-                break;
-              }
-            }
-            if (!found) {
-              setLocationError(`Could not map location to a known region. Detected: ${cleanProvince}`);
-              setProvince(cleanProvince); // Set it anyway so user can see
-            }
-          }
-        } else {
-          setLocationError("Could not detect province from location.");
+          setProvince(detectedProvince);
         }
+
+        if (!detectedRegion && !detectedProvince) {
+          setLocationError("Could not detect region and province. Please select them manually below.");
+        } else if (detectedRegion && !detectedProvince) {
+          setLocationError("Region detected, but province was not. Please select the province manually below.");
+        } else {
+          setLocationError("");
+        }
+      } else {
+        setLocationError("Could not detect region and province. Please select them manually below.");
       }
     } catch (error) {
       console.error("Error detecting location:", error);
-      setLocationError("Failed to detect location details.");
+      setLocationError("Failed to detect location details. Please select them manually below.");
     } finally {
       setIsLocating(false);
+    }
+  };
+
+  const handleRegionChange = (selectedRegion: Region) => {
+    setRegion(selectedRegion);
+
+    if (!PROVINCES_BY_REGION[selectedRegion]?.includes(province)) {
+      setProvince("");
+    }
+
+    if (selectedRegion) {
+      setLocationError("");
     }
   };
 
@@ -730,6 +802,36 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
                   )}
                 </div>
               )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="region">Region *</Label>
+                <Select value={region} onValueChange={(value) => handleRegionChange(value as Region)}>
+                  <SelectTrigger id="region">
+                    <SelectValue placeholder="Select region" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REGIONS.map((reg) => (
+                      <SelectItem key={reg} value={reg}>{reg}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="province">Province *</Label>
+                <Select value={province} onValueChange={setProvince} disabled={!region}>
+                  <SelectTrigger id="province">
+                    <SelectValue placeholder={region ? "Select province" : "Select region first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(region ? PROVINCES_BY_REGION[region as Region] : []).map((prov) => (
+                      <SelectItem key={prov} value={prov}>{prov}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
