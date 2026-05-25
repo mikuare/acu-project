@@ -91,7 +91,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.warn('Global sign out failed, clearing local session instead:', error);
+        await supabase.auth.signOut({ scope: 'local' });
+      }
+
+      setSession(null);
+      setUser(null);
 
       toast({
         title: "👋 Signed Out",
@@ -100,10 +106,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       navigate('/');
     } catch (error: any) {
+      setSession(null);
+      setUser(null);
+      navigate('/');
+
       toast({
-        title: "❌ Sign Out Failed",
-        description: error.message,
-        variant: "destructive",
+        title: "👋 Signed Out",
+        description: "Your local session has been cleared.",
         duration: 2000,
       });
     }

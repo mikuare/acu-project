@@ -166,16 +166,8 @@ const MarkImplementedPanel = ({ project, onSuccess, onCancel }: MarkImplementedP
                 throw new Error("Attach at least one verification image or document before marking the project as implemented.");
             }
 
-            const { error: projectStatusError } = await supabase
-                .from('projects')
-                .update({
-                    status: status as any,
-                })
-                .eq('id', project.id);
-
-            if (projectStatusError) throw projectStatusError;
-
-            // Create or update implementation record
+            // Create or update implementation record. This status is tracker-only
+            // and must not change the public project status shown to regular users.
             const { error: updateError } = await (supabase as any)
                 .from('project_implementations')
                 .upsert({
