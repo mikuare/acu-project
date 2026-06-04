@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { REGIONS, PROVINCES_BY_REGION, Region, getRegionForProvince } from "@/utils/philippineData";
 import { optimizeImageFile } from "@/utils/optimizeImageFile";
 import { useAppSettings } from "@/contexts/AppSettingsContext";
+import { useUserCredentials } from "@/contexts/UserCredentialsContext";
 
 interface ProjectFormModalProps {
   open: boolean;
@@ -28,6 +29,23 @@ const branchColors = {
 };
 
 const DOCUMENT_ACCEPT_TYPES = ".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip,application/zip,application/x-zip-compressed";
+
+interface ImagePhotoInfo {
+  componentId: string;
+  purpose: string;
+  dateCaptured: string;
+  location: string;
+}
+
+const getImageComponentId = (fileName: string) =>
+  fileName.replace(/\.[^/.]+$/, "").replace(/^\d+_/, "") || "Project photo";
+
+const getUserDisplayName = (user: any) =>
+  user?.user_metadata?.full_name ||
+  user?.user_metadata?.display_name ||
+  user?.user_metadata?.name ||
+  user?.email ||
+  null;
 
 const normalizeLocationText = (value: string) =>
   value
@@ -88,6 +106,7 @@ const findProvinceInText = (candidates: string[]) => {
 
 const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }: ProjectFormModalProps) => {
   const { projectCategories, projectStatuses } = useAppSettings();
+  const { username: regularUsername } = useUserCredentials();
   const [projectId, setProjectId] = useState("");
   const [description, setDescription] = useState("");
 
@@ -116,6 +135,7 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
   const [additionalDetails, setAdditionalDetails] = useState("");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imagePhotoInfos, setImagePhotoInfos] = useState<ImagePhotoInfo[]>([]);
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const [showCamera, setShowCamera] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -233,6 +253,15 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
 
       // Add new files
       setImageFiles(prev => [...prev, ...validFiles]);
+      setImagePhotoInfos(prev => [
+        ...prev,
+        ...validFiles.map(file => ({
+          componentId: getImageComponentId(file.name),
+          purpose: "attachment",
+          dateCaptured: new Date().toISOString().split("T")[0],
+          location: `${latitude.toFixed(7)}, ${longitude.toFixed(7)}`,
+        })),
+      ]);
 
       // Create previews
       validFiles.forEach(file => {
@@ -344,6 +373,15 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
 
             setImageFiles(prev => [...prev, file]);
             setImagePreviews(prev => [...prev, preview]);
+            setImagePhotoInfos(prev => [
+              ...prev,
+              {
+                componentId: getImageComponentId(file.name),
+                purpose: "attachment",
+                dateCaptured: new Date().toISOString().split("T")[0],
+                location: `${latitude.toFixed(7)}, ${longitude.toFixed(7)}`,
+              },
+            ]);
 
             toast({
               title: "📸 Photo Captured!",
@@ -372,6 +410,15 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
   const removeImage = (index: number) => {
     setImageFiles(prev => prev.filter((_, i) => i !== index));
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setImagePhotoInfos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateImagePhotoInfo = (index: number, field: keyof ImagePhotoInfo, value: string) => {
+    setImagePhotoInfos(prev =>
+      prev.map((info, infoIndex) =>
+        infoIndex === index ? { ...info, [field]: value } : info
+      )
+    );
   };
 
   const removeDocument = (index: number) => {
@@ -393,6 +440,10 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
     try {
       let imageUrls: string[] = [];
       let documentUrls: string[] = [];
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUser = sessionData.session?.user ?? null;
+      const createdUserType = currentUser ? "admin" : "regular";
+      const createdRegularUsername = currentUser ? null : regularUsername;
 
       // Upload all images if provided
       if (imageFiles.length > 0) {
@@ -434,38 +485,100 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
       }
 
       // Insert project data
-      const { error: insertError } = await supabase.from('projects').insert({
-        project_id: projectId,
-        description,
-        status: status as any,
-        category_type: category,
-        region,
-        province,
-        contract_cost: contractCost ? parseFloat(contractCost) : null,
+      const { data: insertedProject, error: insertError } = await supabase
+        .from('projects')
+        .insert({
+          project_id: projectId,
+          description,
+          status: status as any,
+          category_type: category,
+          region,
+          province,
+          contract_cost: contractCost ? parseFloat(contractCost) : null,
 
-        // New Date Fields
-        effectivity_date: effectivityDate || null,
-        actual_start_date: actualStartDate || null,
-        expiry_date: expiryDate || null,
+          // New Date Fields
+          effectivity_date: effectivityDate || null,
+          actual_start_date: actualStartDate || null,
+          expiry_date: expiryDate || null,
 
-        // Fallback for legacy project_date (use actual start or today)
-        year: parseInt(actualStartDate ? actualStartDate.substring(0, 4) : new Date().getFullYear().toString()),
-        project_date: actualStartDate || new Date().toISOString().split('T')[0],
+          // Fallback for legacy project_date (use actual start or today)
+          year: parseInt(actualStartDate ? actualStartDate.substring(0, 4) : new Date().getFullYear().toString()),
+          project_date: actualStartDate || new Date().toISOString().split('T')[0],
 
-        engineer_name: engineerName,
-        user_name: userName,
-        contact_phone: contactPhone || null,
-        contact_email: contactEmail || null,
-        contact_social: contactSocial || null,
-        branch,
-        latitude,
-        longitude,
-        image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
-        document_urls: documentUrls.length > 0 ? documentUrls.join(',') : null,
-        additional_details: additionalDetails || null,
-      });
+          engineer_name: engineerName,
+          user_name: userName,
+          contact_phone: contactPhone || null,
+          contact_email: contactEmail || null,
+          contact_social: contactSocial || null,
+          branch,
+          latitude,
+          longitude,
+          image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
+          document_urls: documentUrls.length > 0 ? documentUrls.join(',') : null,
+          additional_details: additionalDetails || null,
+          created_by: currentUser?.id ?? null,
+          created_by_email: currentUser?.email ?? null,
+          updated_by: currentUser?.id ?? null,
+          updated_by_email: currentUser?.email ?? null,
+          created_user_type: createdUserType,
+          created_regular_username: createdRegularUsername,
+        })
+        .select('id')
+        .single();
 
       if (insertError) throw insertError;
+
+      if (insertedProject && imageUrls.length > 0) {
+        const photoMetadataRows = imageUrls.map((url, index) => {
+          const info = imagePhotoInfos[index];
+          return {
+            project_id: insertedProject.id,
+            photo_url: url,
+            component_id: info?.componentId?.trim() || getImageComponentId(imageFiles[index]?.name || `Photo ${index + 1}`),
+            purpose: info?.purpose?.trim() || "attachment",
+            date_captured: info?.dateCaptured || null,
+            location: info?.location?.trim() || `${latitude.toFixed(7)}, ${longitude.toFixed(7)}`,
+          };
+        });
+
+        const { error: metadataError } = await (supabase as any)
+          .from('project_photo_metadata')
+          .insert(photoMetadataRows);
+
+        if (metadataError) {
+          console.error("Error saving photo metadata:", metadataError);
+          toast({
+            title: "Photo information not saved",
+            description: "Project was added, but photo metadata could not be saved. Ask admin to apply the metadata migration.",
+            variant: "destructive",
+          });
+        }
+      }
+
+      if (insertedProject) {
+        const { error: auditError } = await (supabase as any)
+          .from('project_audit_logs')
+          .insert({
+            project_id: insertedProject.id,
+            action: 'created',
+            changed_by: currentUser?.id ?? null,
+            changed_by_email: currentUser?.email ?? null,
+            changed_by_name: getUserDisplayName(currentUser),
+            regular_username: createdRegularUsername,
+            changes: {
+              project_id: projectId,
+              description,
+              status,
+              branch,
+              created_user_type: createdUserType,
+              created_regular_username: createdRegularUsername,
+            },
+          });
+
+        if (auditError) {
+          console.error("Error saving project audit log:", auditError);
+        }
+      }
 
       toast({
         title: "Success!",
@@ -492,6 +605,7 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
       setAdditionalDetails("");
       setImageFiles([]);
       setImagePreviews([]);
+      setImagePhotoInfos([]);
       setDocumentFiles([]);
 
       onSuccess();
@@ -679,25 +793,66 @@ const ProjectFormModal = ({ open, onOpenChange, latitude, longitude, onSuccess }
                 <p className="text-sm text-muted-foreground">
                   {imageFiles.length} image{imageFiles.length !== 1 ? 's' : ''} selected
                 </p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={preview}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg border"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeImage(index)}
-                        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
-                      <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                        {index + 1} of {imageFiles.length}
+                    <div key={index} className="space-y-3 rounded-lg border p-3">
+                      <div className="relative group">
+                        <img
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg border"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                        <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                          {index + 1} of {imageFiles.length}
+                        </div>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <div className="space-y-1">
+                          <Label htmlFor={`image-component-${index}`} className="text-xs">Component ID</Label>
+                          <Input
+                            id={`image-component-${index}`}
+                            value={imagePhotoInfos[index]?.componentId || ""}
+                            onChange={(event) => updateImagePhotoInfo(index, "componentId", event.target.value)}
+                            placeholder="Component ID"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`image-purpose-${index}`} className="text-xs">Purpose</Label>
+                          <Input
+                            id={`image-purpose-${index}`}
+                            value={imagePhotoInfos[index]?.purpose || ""}
+                            onChange={(event) => updateImagePhotoInfo(index, "purpose", event.target.value)}
+                            placeholder="attachment"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`image-date-${index}`} className="text-xs">Date Captured</Label>
+                          <Input
+                            id={`image-date-${index}`}
+                            type="date"
+                            value={imagePhotoInfos[index]?.dateCaptured || ""}
+                            onChange={(event) => updateImagePhotoInfo(index, "dateCaptured", event.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`image-location-${index}`} className="text-xs">Location</Label>
+                          <Input
+                            id={`image-location-${index}`}
+                            value={imagePhotoInfos[index]?.location || ""}
+                            onChange={(event) => updateImagePhotoInfo(index, "location", event.target.value)}
+                            placeholder={`${latitude.toFixed(7)}, ${longitude.toFixed(7)}`}
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}

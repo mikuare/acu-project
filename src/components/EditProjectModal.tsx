@@ -6,12 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { Upload, X as XIcon, MapPin, Trash2, Loader2 } from "lucide-react";
+import { X as XIcon, Trash2, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import ImageViewerModal from "./ImageViewerModal";
 import { optimizeImageFile } from "@/utils/optimizeImageFile";
 import { joinStoredUrls, splitStoredUrls } from "@/utils/projectMedia";
 import { optimizeStoredImages } from "@/utils/optimizeStoredImages";
@@ -41,6 +40,11 @@ interface Project {
   region: string | null;
   province: string | null;
   category_type: string | null;
+  updated_at?: string | null;
+  created_by?: string | null;
+  created_by_email?: string | null;
+  updated_by?: string | null;
+  updated_by_email?: string | null;
 }
 
 interface EditProjectModalProps {
@@ -57,6 +61,52 @@ const branchColors = {
 };
 
 const DOCUMENT_ACCEPT_TYPES = ".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip,application/zip,application/x-zip-compressed";
+
+interface PhotoInfoForm {
+  componentId: string;
+  purpose: string;
+  dateCaptured: string;
+  location: string;
+}
+
+const getPhotoFileName = (url: string) => {
+  const path = url.split("?")[0];
+  return decodeURIComponent(path.split("/").pop() || "Project photo");
+};
+
+const getComponentIdFromPhotoName = (url: string) => {
+  const fileName = getPhotoFileName(url);
+  return fileName.replace(/\.[^/.]+$/, "").replace(/^\d+_/, "") || "Project photo";
+};
+
+const getUploadedDateFromPhotoName = (url: string, fallbackDate: string) => {
+  const fileName = getPhotoFileName(url);
+  const timestamp = fileName.match(/^(\d{13})_/)?.[1];
+  const parsedDate = timestamp ? new Date(Number(timestamp)) : new Date(fallbackDate);
+  return Number.isNaN(parsedDate.getTime()) ? "" : parsedDate.toISOString().slice(0, 10);
+};
+
+const getUserDisplayName = (user: any) =>
+  user?.user_metadata?.full_name ||
+  user?.user_metadata?.display_name ||
+  user?.user_metadata?.name ||
+  user?.email ||
+  null;
+
+const getChangedFields = (before: Project, after: Record<string, any>) => {
+  const changes: Record<string, { from: any; to: any }> = {};
+  const skippedFields = new Set(["updated_by", "updated_by_email"]);
+
+  Object.entries(after).forEach(([key, value]) => {
+    if (skippedFields.has(key)) return;
+    const previous = (before as any)[key];
+    if ((previous ?? null) !== (value ?? null)) {
+      changes[key] = { from: previous ?? null, to: value ?? null };
+    }
+  });
+
+  return changes;
+};
 
 const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjectModalProps) => {
   const { projectStatuses } = useAppSettings();
@@ -77,14 +127,19 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showImageViewer, setShowImageViewer] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [newImages, setNewImages] = useState<File[]>([]);
   const [newDocuments, setNewDocuments] = useState<File[]>([]);
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [existingDocUrls, setExistingDocUrls] = useState<string[]>([]);
   const [isOptimizingExistingImages, setIsOptimizingExistingImages] = useState(false);
+  const [photoEditorUrl, setPhotoEditorUrl] = useState<string | null>(null);
+  const [photoInfoForm, setPhotoInfoForm] = useState<PhotoInfoForm>({
+    componentId: "",
+    purpose: "attachment",
+    dateCaptured: "",
+    location: "",
+  });
+  const [isSavingPhotoInfo, setIsSavingPhotoInfo] = useState(false);
 
   useEffect(() => {
     if (project) {
@@ -121,6 +176,7 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
 
       setNewImages([]);
       setNewDocuments([]);
+      setPhotoEditorUrl(null);
     }
   }, [project?.id, open]);
 
@@ -218,6 +274,8 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
       // Combine existing and new URLs
       const allImageUrls = [...existingImageUrls, ...uploadedImageUrls];
       const allDocUrls = [...existingDocUrls, ...uploadedDocUrls];
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUser = sessionData.session?.user ?? null;
 
       const updateData = {
         project_id: projectId,
@@ -239,7 +297,13 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
         longitude: lng,
         image_url: allImageUrls.length > 0 ? allImageUrls.join(',') : null,
         document_urls: allDocUrls.length > 0 ? allDocUrls.join(',') : null,
+        updated_by: currentUser?.id ?? null,
+        updated_by_email: currentUser?.email ?? null,
       };
+      const auditChanges = getChangedFields(project, {
+        ...updateData,
+        status,
+      });
 
       const { error: updateError } = await supabase
         .from('projects')
@@ -251,6 +315,23 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
 
       if (updateError) {
         throw updateError;
+      }
+
+      if (currentUser) {
+        const { error: auditError } = await (supabase as any)
+          .from('project_audit_logs')
+          .insert({
+            project_id: project.id,
+            action: 'updated',
+            changed_by: currentUser.id,
+            changed_by_email: currentUser.email,
+            changed_by_name: getUserDisplayName(currentUser),
+            changes: auditChanges,
+          });
+
+        if (auditError) {
+          console.error("Error saving project audit log:", auditError);
+        }
       }
 
       toast({
@@ -274,10 +355,106 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
     }
   };
 
-  const handleImageClick = (urls: string[], index: number) => {
-    setImageUrls(urls);
-    setSelectedImageIndex(index);
-    setShowImageViewer(true);
+  const handlePhotoInfoClick = async (url: string) => {
+    if (!project) return;
+
+    const defaultForm = {
+      componentId: getComponentIdFromPhotoName(url),
+      purpose: "attachment",
+      dateCaptured: getUploadedDateFromPhotoName(url, project.project_date || new Date().toISOString()),
+      location: `${project.latitude.toFixed(7)}, ${project.longitude.toFixed(7)}`,
+    };
+
+    setPhotoEditorUrl(url);
+    setPhotoInfoForm(defaultForm);
+
+    const { data, error } = await (supabase as any)
+      .from("project_photo_metadata")
+      .select("component_id, purpose, date_captured, location")
+      .eq("project_id", project.id)
+      .eq("photo_url", url)
+      .maybeSingle();
+
+    if (error && error.code !== "PGRST116") {
+      console.error("Error loading photo metadata:", error);
+      toast({
+        title: "Photo metadata unavailable",
+        description: "Using default values until the metadata table is available.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (data) {
+      setPhotoInfoForm({
+        componentId: data.component_id || defaultForm.componentId,
+        purpose: data.purpose || defaultForm.purpose,
+        dateCaptured: data.date_captured || defaultForm.dateCaptured,
+        location: data.location || defaultForm.location,
+      });
+    }
+  };
+
+  const handleSavePhotoInfo = async () => {
+    if (!project || !photoEditorUrl) return;
+
+    setIsSavingPhotoInfo(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const { error } = await (supabase as any)
+        .from("project_photo_metadata")
+        .upsert(
+          {
+            project_id: project.id,
+            photo_url: photoEditorUrl,
+            component_id: photoInfoForm.componentId.trim() || null,
+            purpose: photoInfoForm.purpose.trim() || "attachment",
+            date_captured: photoInfoForm.dateCaptured || null,
+            location: photoInfoForm.location.trim() || null,
+            updated_by: sessionData.session?.user.id ?? null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "project_id,photo_url" },
+        );
+
+      if (error) throw error;
+
+      const { error: auditError } = await (supabase as any)
+        .from("project_audit_logs")
+        .insert({
+          project_id: project.id,
+          action: "photo_metadata_updated",
+          changed_by: sessionData.session?.user.id ?? null,
+          changed_by_email: sessionData.session?.user.email ?? null,
+          changed_by_name: getUserDisplayName(sessionData.session?.user),
+          changes: {
+            photo_url: photoEditorUrl,
+            component_id: photoInfoForm.componentId.trim() || null,
+            purpose: photoInfoForm.purpose.trim() || "attachment",
+            date_captured: photoInfoForm.dateCaptured || null,
+            location: photoInfoForm.location.trim() || null,
+          },
+        });
+
+      if (auditError) {
+        console.error("Error saving photo metadata audit log:", auditError);
+      }
+
+      toast({
+        title: "Photo information saved",
+        description: "This photo metadata will show in project details.",
+      });
+      setPhotoEditorUrl(null);
+    } catch (error: any) {
+      console.error("Error saving photo metadata:", error);
+      toast({
+        title: "Could not save photo information",
+        description: error.message || "Apply the photo metadata migration, then try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingPhotoInfo(false);
+    }
   };
 
   const handleOptimizeExistingImages = async () => {
@@ -533,8 +710,18 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
                         src={img.url}
                         alt={`Image ${index + 1}`}
                         className="w-full h-32 object-cover rounded-lg border cursor-pointer"
-                        onClick={() => img.type === 'existing' && handleImageClick(existingImageUrls, existingImageUrls.indexOf(img.url))}
+                        onClick={() => img.type === 'existing' && handlePhotoInfoClick(img.url)}
                       />
+                      {img.type === 'existing' && (
+                        <div className="pointer-events-none absolute inset-x-1 bottom-1 rounded bg-black/70 px-2 py-1 text-center text-[10px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+                          Edit photo info
+                        </div>
+                      )}
+                      {img.type === 'new' && (
+                        <div className="pointer-events-none absolute inset-x-1 bottom-1 rounded bg-blue-600/80 px-2 py-1 text-center text-[10px] font-medium text-white">
+                          New image
+                        </div>
+                      )}
                       <Button
                         type="button"
                         variant="destructive"
@@ -616,12 +803,84 @@ const EditProjectModal = ({ open, onOpenChange, project, onSuccess }: EditProjec
         </DialogContent>
       </Dialog>
 
-      <ImageViewerModal
-        isOpen={showImageViewer}
-        onClose={() => setShowImageViewer(false)}
-        images={imageUrls}
-        initialIndex={selectedImageIndex}
-      />
+      <Dialog open={!!photoEditorUrl} onOpenChange={(nextOpen) => !nextOpen && setPhotoEditorUrl(null)}>
+        <DialogContent className="w-[95vw] max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Photo Information</DialogTitle>
+            <DialogDescription>
+              Configure the photo metadata shown to users in the project gallery.
+            </DialogDescription>
+          </DialogHeader>
+
+          {photoEditorUrl && (
+            <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-5">
+              <div className="space-y-3">
+                <div className="overflow-hidden rounded-lg border bg-muted">
+                  <img
+                    src={photoEditorUrl}
+                    alt={photoInfoForm.componentId || "Project photo"}
+                    className="max-h-[60vh] w-full object-contain"
+                  />
+                </div>
+                <p className="truncate text-xs text-muted-foreground">{getPhotoFileName(photoEditorUrl)}</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-photo-component-id">Component ID</Label>
+                  <Input
+                    id="edit-photo-component-id"
+                    value={photoInfoForm.componentId}
+                    onChange={(event) => setPhotoInfoForm((current) => ({ ...current, componentId: event.target.value }))}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-photo-purpose">Purpose</Label>
+                  <Input
+                    id="edit-photo-purpose"
+                    value={photoInfoForm.purpose}
+                    onChange={(event) => setPhotoInfoForm((current) => ({ ...current, purpose: event.target.value }))}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-photo-date-captured">Date Captured</Label>
+                  <Input
+                    id="edit-photo-date-captured"
+                    type="date"
+                    value={photoInfoForm.dateCaptured}
+                    onChange={(event) => setPhotoInfoForm((current) => ({ ...current, dateCaptured: event.target.value }))}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-photo-location">Location</Label>
+                  <Input
+                    id="edit-photo-location"
+                    value={photoInfoForm.location}
+                    onChange={(event) => setPhotoInfoForm((current) => ({ ...current, location: event.target.value }))}
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                  <Button
+                    className="bg-[#FF5722] hover:bg-[#E64A19]"
+                    onClick={handleSavePhotoInfo}
+                    disabled={isSavingPhotoInfo}
+                  >
+                    {isSavingPhotoInfo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Save Photo Info
+                  </Button>
+                  <Button variant="outline" onClick={() => setPhotoEditorUrl(null)} disabled={isSavingPhotoInfo}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

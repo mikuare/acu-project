@@ -5,16 +5,27 @@ interface MapControlPanelProps {
   onEnterProject: () => void;
   onPinOnMap: () => void;
   onSearchPlace: () => void;
+  canEnterProject?: boolean;
+  canPinProject?: boolean;
+  canSearchMap?: boolean;
 }
 
-const MapControlPanel = ({ onEnterProject, onPinOnMap, onSearchPlace }: MapControlPanelProps) => {
+const MapControlPanel = ({
+  onEnterProject,
+  onPinOnMap,
+  onSearchPlace,
+  canEnterProject = true,
+  canPinProject = true,
+  canSearchMap = true,
+}: MapControlPanelProps) => {
   return (
     <div className="absolute bottom-3 sm:bottom-6 left-2 sm:left-6 z-[1000] bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-lg shadow-2xl border-2 border-slate-200 dark:border-slate-700 p-2 sm:p-4">
       <div className="flex flex-col gap-1.5 sm:gap-2.5 min-w-[140px] sm:min-w-[180px]">
         <Button
           onClick={onEnterProject}
-          className="flex items-center gap-1.5 sm:gap-2 w-full justify-start text-xs sm:text-sm font-medium h-9 sm:h-11 px-2 sm:px-4"
+          className={`flex items-center gap-1.5 sm:gap-2 w-full justify-start text-xs sm:text-sm font-medium h-9 sm:h-11 px-2 sm:px-4 ${!canEnterProject ? 'opacity-60' : ''}`}
           variant="default"
+          aria-disabled={!canEnterProject}
           title="Use your current device location to add a project. Location access required - please allow when prompted."
         >
           <Locate className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -22,16 +33,18 @@ const MapControlPanel = ({ onEnterProject, onPinOnMap, onSearchPlace }: MapContr
         </Button>
         <Button
           onClick={onPinOnMap}
-          className="flex items-center gap-1.5 sm:gap-2 w-full justify-start text-xs sm:text-sm font-medium h-9 sm:h-11 px-2 sm:px-4"
+          className={`flex items-center gap-1.5 sm:gap-2 w-full justify-start text-xs sm:text-sm font-medium h-9 sm:h-11 px-2 sm:px-4 ${!canPinProject ? 'opacity-60' : ''}`}
           variant="outline"
+          aria-disabled={!canPinProject}
         >
           <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
           <span className="truncate">Pin on Map</span>
         </Button>
         <Button
           onClick={onSearchPlace}
-          className="flex items-center gap-1.5 sm:gap-2 w-full justify-start text-xs sm:text-sm font-medium h-9 sm:h-11 px-2 sm:px-4"
+          className={`flex items-center gap-1.5 sm:gap-2 w-full justify-start text-xs sm:text-sm font-medium h-9 sm:h-11 px-2 sm:px-4 ${!canSearchMap ? 'opacity-60' : ''}`}
           variant="outline"
+          aria-disabled={!canSearchMap}
         >
           <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
           <span className="truncate">Search Place</span>

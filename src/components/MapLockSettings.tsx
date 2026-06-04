@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useAppSettings } from '@/contexts/AppSettingsContext';
+import { DEFAULT_LANDING_HEADER_BUTTON, LandingHeaderButtonConfig, useAppSettings } from '@/contexts/AppSettingsContext';
 import { toast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, Eye, EyeOff, KeyRound, Map as MapIcon, Lock, LockOpen, Shield, Loader2, CircleCheck, X } from 'lucide-react';
+import { Copy, Eye, EyeOff, ExternalLink, KeyRound, Map as MapIcon, Lock, LockOpen, Shield, Loader2, CircleCheck, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   CATEGORY_ICON_OPTIONS,
@@ -56,17 +56,21 @@ const MapLockSettings = ({ open, onOpenChange }: MapLockSettingsProps) => {
     updateMapboxToken,
     projectCategories,
     projectStatuses,
+    landingHeaderButtons,
     updateProjectCategories,
     updateProjectStatuses,
+    updateLandingHeaderButtons,
     isLoading
   } = useAppSettings();
   const [saving, setSaving] = useState(false);
   const [savingToken, setSavingToken] = useState(false);
   const [savingLists, setSavingLists] = useState(false);
+  const [savingHeaderButton, setSavingHeaderButton] = useState(false);
   const [localLockState, setLocalLockState] = useState(isMapLocked);
   const [localToken, setLocalToken] = useState('');
   const [localCategories, setLocalCategories] = useState<ProjectCategoryConfig[]>(DEFAULT_PROJECT_CATEGORIES);
   const [localStatuses, setLocalStatuses] = useState<ProjectStatusConfig[]>(DEFAULT_PROJECT_STATUSES);
+  const [localHeaderButtons, setLocalHeaderButtons] = useState<LandingHeaderButtonConfig[]>([DEFAULT_LANDING_HEADER_BUTTON]);
   const [configPassword, setConfigPassword] = useState('');
   const [isConfigUnlocked, setIsConfigUnlocked] = useState(false);
   const [isCheckingPassword, setIsCheckingPassword] = useState(false);
@@ -77,11 +81,12 @@ const MapLockSettings = ({ open, onOpenChange }: MapLockSettingsProps) => {
       setLocalToken(mapboxToken || '');
       setLocalCategories(projectCategories);
       setLocalStatuses(projectStatuses);
+      setLocalHeaderButtons(landingHeaderButtons);
       setConfigPassword('');
       setIsConfigUnlocked(false);
       setShowToken(false);
     }
-  }, [mapboxToken, open, projectCategories, projectStatuses]);
+  }, [landingHeaderButtons, mapboxToken, open, projectCategories, projectStatuses]);
 
   useEffect(() => {
     setLocalLockState(isMapLocked);
@@ -279,6 +284,92 @@ const MapLockSettings = ({ open, onOpenChange }: MapLockSettingsProps) => {
     }
   };
 
+  const isValidWebsiteUrl = (value: string) => {
+    try {
+      const url = new URL(value);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  const updateHeaderButtonAt = (index: number, updates: Partial<LandingHeaderButtonConfig>) => {
+    setLocalHeaderButtons((current) =>
+      current.map((button, buttonIndex) =>
+        buttonIndex === index ? { ...button, ...updates } : button
+      )
+    );
+  };
+
+  const addHeaderButton = () => {
+    setLocalHeaderButtons((current) => [
+      ...current,
+      {
+        id: `header-button-${Date.now()}`,
+        enabled: true,
+        label: '',
+        url: '',
+      },
+    ]);
+  };
+
+  const removeHeaderButton = (index: number) => {
+    setLocalHeaderButtons((current) => {
+      const next = current.filter((_, buttonIndex) => buttonIndex !== index);
+      return next.length > 0 ? next : [DEFAULT_LANDING_HEADER_BUTTON];
+    });
+  };
+
+  const handleSaveHeaderButtons = async () => {
+    const nextConfig = localHeaderButtons.map((button, index) => ({
+      id: button.id || `header-button-${index + 1}`,
+      enabled: button.enabled,
+      label: button.label.trim(),
+      url: button.url.trim(),
+    }));
+
+    const invalidButton = nextConfig.find(
+      (button) => button.enabled && (!button.label || !isValidWebsiteUrl(button.url))
+    );
+
+    if (invalidButton) {
+      toast({
+        title: "⚠️ Complete Enabled Buttons",
+        description: "Each enabled button needs a name and a full URL starting with http:// or https://.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSavingHeaderButton(true);
+    try {
+      const success = await updateLandingHeaderButtons(nextConfig);
+
+      if (!success) {
+        toast({
+          title: "❌ Error",
+          description: "Failed to save header button configuration",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "✅ Header Buttons Saved",
+        description: "Landing header website buttons were updated.",
+      });
+    } catch (error) {
+      console.error('Error saving header button configuration:', error);
+      toast({
+        title: "❌ Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingHeaderButton(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden gap-0 border bg-background shadow-lg sm:rounded-lg">
@@ -300,10 +391,11 @@ const MapLockSettings = ({ open, onOpenChange }: MapLockSettingsProps) => {
         ) : (
           <Tabs defaultValue="access" className="w-full">
             <div className="px-6 border-b">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="access">Access</TabsTrigger>
                 <TabsTrigger value="config">Mapbox</TabsTrigger>
                 <TabsTrigger value="lists">Lists</TabsTrigger>
+                <TabsTrigger value="header">Header</TabsTrigger>
               </TabsList>
             </div>
 
@@ -660,6 +752,116 @@ const MapLockSettings = ({ open, onOpenChange }: MapLockSettingsProps) => {
                   </Button>
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="header" className="p-0 m-0 focus-visible:ring-0">
+              <div className="flex max-h-[72vh] flex-col">
+                <div className="px-6 pt-6 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                      <ExternalLink className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-base">Landing Header Buttons</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Add custom website buttons beside the QMAZ header logo/title.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-4">
+                  {localHeaderButtons.map((button, index) => (
+                    <div key={button.id || index} className="rounded-lg border p-4 space-y-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <Label className="text-sm font-medium">Button {index + 1}</Label>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Turn on to display this button in the landing page top pane header.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={button.enabled}
+                            onClick={() => updateHeaderButtonAt(index, { enabled: !button.enabled })}
+                            className={cn(
+                              "relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                              button.enabled ? "bg-[#00C853]" : "bg-input"
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "pointer-events-none block h-6 w-6 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ease-in-out",
+                                button.enabled ? "translate-x-6" : "translate-x-0.5"
+                              )}
+                            />
+                          </button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => removeHeaderButton(index)}
+                            disabled={localHeaderButtons.length <= 1}
+                            title="Remove button"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`landing-header-button-label-${index}`}>Button Name</Label>
+                        <Input
+                          id={`landing-header-button-label-${index}`}
+                          value={button.label}
+                          onChange={(e) => updateHeaderButtonAt(index, { label: e.target.value })}
+                          placeholder="Example: Company Website"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`landing-header-button-url-${index}`}>Website URL</Label>
+                        <Input
+                          id={`landing-header-button-url-${index}`}
+                          type="url"
+                          value={button.url}
+                          onChange={(e) => updateHeaderButtonAt(index, { url: e.target.value })}
+                          placeholder="https://example.com"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          The button opens this URL in a new tab.
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+
+                  <Button type="button" variant="outline" className="w-full" onClick={addHeaderButton}>
+                    Add Website Button
+                  </Button>
+                </div>
+
+                <div className="border-t bg-background p-6 pt-4">
+                  <Button
+                    onClick={handleSaveHeaderButtons}
+                    disabled={savingHeaderButton}
+                    className="w-full gap-2"
+                  >
+                    {savingHeaderButton ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <CircleCheck className="w-4 h-4" />
+                        Save Header Buttons
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         )}

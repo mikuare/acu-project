@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Gavel, CheckCircle2, Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Gavel, CheckCircle2, Building2, ExternalLink } from "lucide-react";
 import {
     HoverCard,
     HoverCardContent,
@@ -8,6 +9,7 @@ import {
 } from "@/components/ui/hover-card";
 import { getIslandGroupForRegion, Region } from '@/utils/philippineData';
 import { CountUp } from "@/components/ui/CountUp";
+import { useAppSettings } from "@/contexts/AppSettingsContext";
 
 interface Project {
     status: string;
@@ -131,6 +133,11 @@ const StatCard = ({
 };
 
 const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: DashboardStatsProps) => {
+    const { landingHeaderButtons } = useAppSettings();
+    const visibleHeaderButtons = landingHeaderButtons.filter(
+        (button) => button.enabled && button.label.trim() && button.url.trim()
+    );
+
     // Calculate Stats
     const stats = useMemo(() => {
         const counts = {
@@ -205,10 +212,22 @@ const DashboardStats = ({ projects, className, currentStatus, onStatusChange }: 
                     </p>
                 </div>
 
-                {/* Right: Illustration */}
-                <div className="hidden md:flex items-center">
+                {/* Right: Configured website button and illustration */}
+                <div className="flex items-center gap-3 mt-4 md:mt-0">
+                    {visibleHeaderButtons.map((button) => (
+                        <Button
+                            key={button.id}
+                            type="button"
+                            variant="outline"
+                            className="border-[#FF5722] text-[#1a237e] hover:bg-[#FF5722] hover:text-white"
+                            onClick={() => window.open(button.url.trim(), '_blank', 'noopener,noreferrer')}
+                        >
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            {button.label}
+                        </Button>
+                    ))}
                     <div className="relative">
-                        <img src="/header-illustration-new.png" alt="Construction Illustration" className="h-24 w-auto object-contain" />
+                        <img src="/header-illustration-new.png" alt="Construction Illustration" className="hidden md:block h-24 w-auto object-contain" />
                     </div>
                 </div>
             </div>

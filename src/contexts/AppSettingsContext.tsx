@@ -10,6 +10,13 @@ import {
   normalizeProjectStatuses,
 } from '@/utils/categoryIcons';
 
+export interface LandingHeaderButtonConfig {
+  id: string;
+  enabled: boolean;
+  label: string;
+  url: string;
+}
+
 interface AppSettingsContextType {
   isMapLocked: boolean;
   isLoading: boolean;
@@ -18,18 +25,41 @@ interface AppSettingsContextType {
   updateMapboxToken: (token: string) => Promise<boolean>;
   projectCategories: ProjectCategoryConfig[];
   projectStatuses: ProjectStatusConfig[];
+  landingHeaderButtons: LandingHeaderButtonConfig[];
   updateProjectCategories: (categories: ProjectCategoryConfig[]) => Promise<boolean>;
   updateProjectStatuses: (statuses: ProjectStatusConfig[]) => Promise<boolean>;
+  updateLandingHeaderButtons: (config: LandingHeaderButtonConfig[]) => Promise<boolean>;
   refreshSettings: () => Promise<void>;
 }
 
 const AppSettingsContext = createContext<AppSettingsContextType | undefined>(undefined);
+
+export const DEFAULT_LANDING_HEADER_BUTTON: LandingHeaderButtonConfig = {
+  id: 'header-button-1',
+  enabled: false,
+  label: '',
+  url: '',
+};
+
+export const normalizeLandingHeaderButtons = (value: unknown): LandingHeaderButtonConfig[] => {
+  const rawButtons = Array.isArray(value) ? value : value ? [value] : [];
+
+  const normalized = rawButtons.map((button: any, index) => ({
+    id: String(button?.id || `header-button-${index + 1}`),
+    enabled: Boolean(button?.enabled),
+    label: String(button?.label || '').trim(),
+    url: String(button?.url || '').trim(),
+  }));
+
+  return normalized.length > 0 ? normalized : [DEFAULT_LANDING_HEADER_BUTTON];
+};
 
 export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [isMapLocked, setIsMapLocked] = useState(false);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [projectCategories, setProjectCategories] = useState<ProjectCategoryConfig[]>(DEFAULT_PROJECT_CATEGORIES);
   const [projectStatuses, setProjectStatuses] = useState<ProjectStatusConfig[]>(DEFAULT_PROJECT_STATUSES);
+  const [landingHeaderButtons, setLandingHeaderButtons] = useState<LandingHeaderButtonConfig[]>([DEFAULT_LANDING_HEADER_BUTTON]);
   const [isLoading, setIsLoading] = useState(true);
 
   const parseJsonSetting = <T,>(value: string | null | undefined, fallback: T) => {
@@ -93,6 +123,18 @@ export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
           ? normalizeProjectStatuses(parseJsonSetting(statusData.setting_value, DEFAULT_PROJECT_STATUSES))
           : DEFAULT_PROJECT_STATUSES
       );
+
+      const { data: headerButtonData, error: headerButtonError } = await supabase
+        .from('app_settings')
+        .select('setting_value')
+        .eq('setting_key', 'landing_header_button')
+        .single();
+
+      setLandingHeaderButtons(
+        !headerButtonError && headerButtonData
+          ? normalizeLandingHeaderButtons(parseJsonSetting(headerButtonData.setting_value, [DEFAULT_LANDING_HEADER_BUTTON]))
+          : [DEFAULT_LANDING_HEADER_BUTTON]
+      );
     } catch (error) {
       console.error('Error in loadSettings:', error);
       setIsMapLocked(false);
@@ -128,6 +170,8 @@ export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
                 setProjectCategories(normalizeProjectCategories(parseJsonSetting(record.setting_value, DEFAULT_PROJECT_CATEGORIES)));
               } else if (record.setting_key === 'project_statuses') {
                 setProjectStatuses(normalizeProjectStatuses(parseJsonSetting(record.setting_value, DEFAULT_PROJECT_STATUSES)));
+              } else if (record.setting_key === 'landing_header_button') {
+                setLandingHeaderButtons(normalizeLandingHeaderButtons(parseJsonSetting(record.setting_value, [DEFAULT_LANDING_HEADER_BUTTON])));
               }
             }
           }
@@ -221,6 +265,22 @@ export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
     return success;
   };
 
+  const updateLandingHeaderButtons = async (config: LandingHeaderButtonConfig[]): Promise<boolean> => {
+    const normalized = normalizeLandingHeaderButtons(config);
+
+    const success = await upsertSetting(
+      'landing_header_button',
+      JSON.stringify(normalized),
+      'Configurable website button shown in the landing page top header'
+    );
+
+    if (success) {
+      setLandingHeaderButtons(normalized);
+    }
+
+    return success;
+  };
+
   const updateMapboxToken = async (token: string): Promise<boolean> => {
     try {
       // First try to update
@@ -276,8 +336,10 @@ export const AppSettingsProvider = ({ children }: { children: ReactNode }) => {
       updateMapboxToken,
       projectCategories,
       projectStatuses,
+      landingHeaderButtons,
       updateProjectCategories,
       updateProjectStatuses,
+      updateLandingHeaderButtons,
       refreshSettings
     }}>
       {children}
@@ -292,4 +354,3 @@ export const useAppSettings = () => {
   }
   return context;
 };
-

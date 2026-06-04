@@ -227,7 +227,7 @@ const ImplementationMap = ({ projects, selectedProjectId, onProjectSelect, route
                 maxZoom={19}
             >
                 {/* Navigation Controls */}
-                <NavigationControl position="top-right" />
+                <NavigationControl position="bottom-right" />
 
                 {/* User Location Marker */}
                 {safeUserLocation && (

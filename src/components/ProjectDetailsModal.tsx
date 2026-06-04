@@ -2,17 +2,19 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import {
   Calendar, User, Briefcase, Phone, Mail, MapPin,
   Image as ImageIcon, FileText, Download, Share2, Flag, X
 } from "lucide-react";
-import { useState } from "react";
-import ImageViewerModal from "./ImageViewerModal";
+import { useEffect, useState } from "react";
 import ReportProjectModal from "./ReportProjectModal";
 import ShareProjectModal from "./ShareProjectModal";
 import { splitStoredUrls } from "@/utils/projectMedia";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Project {
   id: string;
@@ -45,6 +47,7 @@ interface ProjectDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   project: Project | null;
+  editablePhotoInfo?: boolean;
 }
 
 const branchColors = {
@@ -53,17 +56,93 @@ const branchColors = {
   QMB: "bg-[#DC2626]",    // Bright Red
 };
 
-const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModalProps) => {
-  const [showImageViewer, setShowImageViewer] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
+interface PhotoInfo {
+  componentId: string;
+  purpose: string;
+  dateCaptured: string;
+  location: string;
+}
+
+const getPhotoFileName = (url: string) => {
+  const path = url.split("?")[0];
+  return decodeURIComponent(path.split("/").pop() || "Project photo");
+};
+
+const getComponentIdFromPhotoName = (url: string) => {
+  const fileName = getPhotoFileName(url);
+  return fileName.replace(/\.[^/.]+$/, "").replace(/^\d+_/, "") || "Project photo";
+};
+
+const getUploadedDateFromPhotoName = (url: string, fallbackDate: string) => {
+  const fileName = getPhotoFileName(url);
+  const timestamp = fileName.match(/^(\d{13})_/)?.[1];
+  const parsedDate = timestamp ? new Date(Number(timestamp)) : new Date(fallbackDate);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "";
+  }
+
+  return parsedDate.toISOString().slice(0, 10);
+};
+
+const formatPhotoDate = (dateValue: string) => {
+  if (!dateValue) return "N/A";
+  const parsedDate = new Date(`${dateValue}T00:00:00`);
+  return Number.isNaN(parsedDate.getTime()) ? "N/A" : format(parsedDate, "PPP");
+};
+
+const ProjectDetailsModal = ({ open, onOpenChange, project, editablePhotoInfo = false }: ProjectDetailsModalProps) => {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
+  const [photoInfoByUrl, setPhotoInfoByUrl] = useState<Record<string, PhotoInfo>>({});
+
+  const projectImageUrls = splitStoredUrls(project?.image_url ?? null);
+  const projectDocumentUrls = splitStoredUrls(project?.document_urls ?? null);
+
+  useEffect(() => {
+    if (!open || !project || projectImageUrls.length === 0) return;
+
+    const loadPhotoMetadata = async () => {
+      const { data, error } = await (supabase as any)
+        .from("project_photo_metadata")
+        .select("photo_url, component_id, purpose, date_captured, location")
+        .eq("project_id", project.id)
+        .in("photo_url", projectImageUrls);
+
+      if (error) {
+        console.error("Error loading photo metadata:", error);
+        return;
+      }
+
+      const nextMetadata: Record<string, PhotoInfo> = {};
+      (data || []).forEach((record: any) => {
+        nextMetadata[record.photo_url] = {
+          componentId: record.component_id || getComponentIdFromPhotoName(record.photo_url),
+          purpose: record.purpose || "attachment",
+          dateCaptured: record.date_captured || getUploadedDateFromPhotoName(record.photo_url, project.created_at),
+          location: record.location || `${project.latitude.toFixed(7)}, ${project.longitude.toFixed(7)}`,
+        };
+      });
+
+      setPhotoInfoByUrl((current) => ({ ...current, ...nextMetadata }));
+    };
+
+    void loadPhotoMetadata();
+  }, [open, project?.id, projectImageUrls.join("|")]);
 
   if (!project) return null;
 
-  const projectImageUrls = splitStoredUrls(project.image_url);
-  const projectDocumentUrls = splitStoredUrls(project.document_urls);
+  const selectedPhotoInfo = selectedPhotoUrl
+    ? photoInfoByUrl[selectedPhotoUrl] ?? {
+      componentId: getComponentIdFromPhotoName(selectedPhotoUrl),
+      purpose: "attachment",
+      dateCaptured: getUploadedDateFromPhotoName(selectedPhotoUrl, project.created_at),
+      location: `${project.latitude.toFixed(7)}, ${project.longitude.toFixed(7)}`,
+    }
+    : null;
+  const selectedPhotoFileName = selectedPhotoUrl ? getPhotoFileName(selectedPhotoUrl) : "";
+  const selectedPhotoMapUrl = `https://www.google.com/maps?q=${project.latitude},${project.longitude}`;
 
   const handleOpenGoogleMaps = () => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${project.latitude},${project.longitude}`;
@@ -75,10 +154,47 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
     window.open(url, '_blank');
   };
 
-  const handleImageClick = (urls: string[], index: number) => {
-    setImageUrls(urls);
-    setSelectedImageIndex(index);
-    setShowImageViewer(true);
+  const handlePhotoClick = (url: string) => {
+    setPhotoInfoByUrl((current) => ({
+      ...current,
+      [url]: current[url] ?? {
+        componentId: getComponentIdFromPhotoName(url),
+        purpose: "attachment",
+        dateCaptured: getUploadedDateFromPhotoName(url, project.created_at),
+        location: `${project.latitude.toFixed(7)}, ${project.longitude.toFixed(7)}`,
+      },
+    }));
+    setSelectedPhotoUrl(url);
+  };
+
+  const updateSelectedPhotoInfo = (field: keyof PhotoInfo, value: string) => {
+    if (!selectedPhotoUrl || !selectedPhotoInfo) return;
+    setPhotoInfoByUrl((current) => ({
+      ...current,
+      [selectedPhotoUrl]: {
+        ...selectedPhotoInfo,
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleDownloadPhoto = async () => {
+    if (!selectedPhotoUrl) return;
+
+    try {
+      const response = await fetch(selectedPhotoUrl);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = selectedPhotoFileName || "project-photo";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.error("Error downloading photo:", error);
+    }
   };
 
   const formatCurrency = (amount: number | null) => {
@@ -372,25 +488,38 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
                 {/* Gallery Tab */}
                 <TabsContent value="gallery" className="pt-6">
                   {projectImageUrls.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                      {projectImageUrls.map((url, index) => (
-                        <div
-                          key={index}
-                          className="group relative aspect-video cursor-pointer overflow-hidden rounded-lg border bg-slate-100"
-                          onClick={() => handleImageClick(projectImageUrls, index)}
-                        >
-                          <img
-                            src={url}
-                            alt={`Project image ${index + 1}`}
-                            loading="lazy"
-                            decoding="async"
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/20">
-                            <ImageIcon className="text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Project Gallery</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          Photos attached to this project. Select a photo to view photo information.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        {projectImageUrls.map((url, index) => (
+                          <div
+                            key={url}
+                            className="group relative aspect-video cursor-pointer overflow-hidden rounded-lg border bg-slate-100"
+                            onClick={() => handlePhotoClick(url)}
+                          >
+                            <img
+                              src={url}
+                              alt={`Project image ${index + 1}`}
+                              loading="lazy"
+                              decoding="async"
+                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/20">
+                              <div className="rounded bg-white/90 px-3 py-1 text-xs font-semibold text-slate-800 opacity-0 shadow transition-opacity group-hover:opacity-100">
+                                View Photo Information
+                              </div>
+                            </div>
+                            <div className="absolute bottom-2 right-2 rounded bg-black/70 px-2 py-1 text-xs font-medium text-white">
+                              {index + 1}/{projectImageUrls.length}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-12 text-slate-400 bg-slate-50 rounded-lg border-2 border-dashed">
@@ -444,12 +573,118 @@ const ProjectDetailsModal = ({ open, onOpenChange, project }: ProjectDetailsModa
         </DialogContent>
       </Dialog>
 
-      <ImageViewerModal
-        isOpen={showImageViewer}
-        onClose={() => setShowImageViewer(false)}
-        images={imageUrls}
-        initialIndex={selectedImageIndex}
-      />
+      <Dialog open={!!selectedPhotoUrl} onOpenChange={(nextOpen) => !nextOpen && setSelectedPhotoUrl(null)}>
+        <DialogContent className="w-[95vw] max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Photo Information</DialogTitle>
+            <DialogDescription>
+              {editablePhotoInfo
+                ? "Review and edit details for this attached project photo."
+                : "Review details for this attached project photo."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedPhotoUrl && selectedPhotoInfo && (
+            <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-5">
+              <div className="space-y-3">
+                <div className="overflow-hidden rounded-lg border bg-slate-100">
+                  <img
+                    src={selectedPhotoUrl}
+                    alt={selectedPhotoInfo.componentId}
+                    className="max-h-[60vh] w-full object-contain"
+                  />
+                </div>
+                <p className="truncate text-xs text-muted-foreground">{selectedPhotoFileName}</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="photo-component-id">Component ID</Label>
+                  {editablePhotoInfo ? (
+                    <Input
+                      id="photo-component-id"
+                      value={selectedPhotoInfo.componentId}
+                      onChange={(event) => updateSelectedPhotoInfo("componentId", event.target.value)}
+                    />
+                  ) : (
+                    <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm font-medium">
+                      {selectedPhotoInfo.componentId}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="photo-purpose">Purpose</Label>
+                  {editablePhotoInfo ? (
+                    <Input
+                      id="photo-purpose"
+                      value={selectedPhotoInfo.purpose}
+                      onChange={(event) => updateSelectedPhotoInfo("purpose", event.target.value)}
+                    />
+                  ) : (
+                    <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm font-medium">
+                      {selectedPhotoInfo.purpose}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="photo-date-captured">Date Captured</Label>
+                  {editablePhotoInfo ? (
+                    <Input
+                      id="photo-date-captured"
+                      type="date"
+                      value={selectedPhotoInfo.dateCaptured}
+                      onChange={(event) => updateSelectedPhotoInfo("dateCaptured", event.target.value)}
+                    />
+                  ) : (
+                    <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm font-medium">
+                      {formatPhotoDate(selectedPhotoInfo.dateCaptured)}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {editablePhotoInfo && formatPhotoDate(selectedPhotoInfo.dateCaptured)}
+                    <span className="ml-1">From camera metadata</span>
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="photo-location">Location</Label>
+                  {editablePhotoInfo ? (
+                    <Input
+                      id="photo-location"
+                      value={selectedPhotoInfo.location}
+                      onChange={(event) => updateSelectedPhotoInfo("location", event.target.value)}
+                    />
+                  ) : (
+                    <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm font-medium">
+                      {selectedPhotoInfo.location}
+                    </p>
+                  )}
+                  <a
+                    href={selectedPhotoMapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-[#FF5722] hover:underline"
+                  >
+                    View on Google Maps →
+                  </a>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                  <Button className="bg-[#FF5722] hover:bg-[#E64A19]" onClick={handleDownloadPhoto}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Photo
+                  </Button>
+                  <Button variant="outline" onClick={() => setSelectedPhotoUrl(null)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <ReportProjectModal
         open={reportModalOpen}

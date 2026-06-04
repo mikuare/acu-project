@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Menu, Navigation, WifiOff } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock3, Loader2, Menu, Navigation, WifiOff } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import ProjectListSidebar from "@/components/ProjectListSidebar";
 import { useNavigate } from "react-router-dom";
@@ -241,6 +241,21 @@ const ImplementationTracker = () => {
     const selectedProject = selectedProjectId
         ? projects.find(p => p.id === selectedProjectId) || null
         : null;
+
+    const implementationStats = useMemo(() => {
+        return projects.reduce(
+            (counts, project) => {
+                if (project.status === "implemented") {
+                    counts.implemented += 1;
+                } else {
+                    counts.ongoing += 1;
+                }
+
+                return counts;
+            },
+            { implemented: 0, ongoing: 0 },
+        );
+    }, [projects]);
 
     const stopNavigation = useCallback((options?: { clearRoute?: boolean; showToast?: boolean }) => {
         const clearRoute = options?.clearRoute ?? true;
@@ -624,6 +639,40 @@ const ImplementationTracker = () => {
                         userLocation={userLocation}
                     />
 
+                    {!isNavigating && (
+                        <div className="absolute top-3 left-3 w-[calc(100%-5rem)] max-w-[360px] z-20 grid grid-cols-2 gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setStatusFilter(statusFilter === "implemented" ? "all" : "implemented")}
+                                className={`rounded-lg border bg-card/95 backdrop-blur shadow-lg p-3 text-left transition hover:border-emerald-500 hover:bg-emerald-50/90 dark:hover:bg-emerald-950/40 ${
+                                    statusFilter === "implemented" ? "border-emerald-500 ring-2 ring-emerald-500/20" : ""
+                                }`}
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Implemented</span>
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                                </div>
+                                <p className="mt-1 text-2xl font-bold text-foreground">{implementationStats.implemented}</p>
+                                <p className="text-[11px] text-muted-foreground">Completed in tracker</p>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setStatusFilter(statusFilter === "ongoing" ? "all" : "ongoing")}
+                                className={`rounded-lg border bg-card/95 backdrop-blur shadow-lg p-3 text-left transition hover:border-orange-500 hover:bg-orange-50/90 dark:hover:bg-orange-950/40 ${
+                                    statusFilter === "ongoing" ? "border-orange-500 ring-2 ring-orange-500/20" : ""
+                                }`}
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Ongoing</span>
+                                    <Clock3 className="h-4 w-4 text-orange-600" />
+                                </div>
+                                <p className="mt-1 text-2xl font-bold text-foreground">{implementationStats.ongoing}</p>
+                                <p className="text-[11px] text-muted-foreground">Not yet implemented</p>
+                            </button>
+                        </div>
+                    )}
+
                     {selectedProject && isNavigating && (
                         <div className="absolute top-3 left-3 right-3 md:left-auto md:w-[340px] z-20 rounded-xl border bg-card/95 backdrop-blur shadow-lg p-4 space-y-3">
                             <div className="flex items-start justify-between gap-3">
@@ -716,6 +765,7 @@ const ImplementationTracker = () => {
                     open={showDetails}
                     onOpenChange={setShowDetails}
                     project={selectedProject as any}
+                    editablePhotoInfo
                 />
 
                 <AlertDialog open={showVpnWarning} onOpenChange={setShowVpnWarning}>

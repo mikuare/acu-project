@@ -7,16 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { LogOut, Edit, Trash2, MapPin, Loader2, Eye, Search, Image as ImageIcon, Menu, X, LayoutGrid, LayoutList, RefreshCw, UserCog, Shield, Flag, CheckCircle } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { LogOut, Edit, Trash2, MapPin, Loader2, Eye, Search, Image as ImageIcon, FileText, Menu, X, LayoutGrid, LayoutList, RefreshCw, UserCog, Shield, Flag, CheckCircle } from 'lucide-react';
 import EditProjectModal from '@/components/EditProjectModal';
 import ViewProjectsModal from '@/components/ViewProjectsModal';
 import ManageUserCredentials from '@/components/ManageUserCredentials';
 import MapLockSettings from '@/components/MapLockSettings';
 import ThemeToggle from '@/components/ThemeToggle';
-import ImageViewerModal from '@/components/ImageViewerModal';
 import ReportList from '@/components/ReportList';
 import { format } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Link } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { splitStoredUrls } from '@/utils/projectMedia';
@@ -36,11 +37,29 @@ interface Project {
   latitude: number;
   longitude: number;
   image_url: string | null;
+  document_urls: string | null;
   additional_details: string | null;
   created_at: string;
+  updated_at: string | null;
   contract_cost: number | null;
   region: string | null;
   province: string | null;
+  created_by: string | null;
+  created_by_email: string | null;
+  updated_by: string | null;
+  updated_by_email: string | null;
+  created_user_type: string | null;
+  created_regular_username: string | null;
+}
+
+interface ProjectAuditLog {
+  id: string;
+  action: string;
+  changed_by_email: string | null;
+  changed_by_name: string | null;
+  regular_username: string | null;
+  changed_at: string;
+  changes: Record<string, any> | null;
 }
 
 const branchColors = {
@@ -50,6 +69,40 @@ const branchColors = {
 };
 
 const getImageUrls = (imageUrl: string | null) => splitStoredUrls(imageUrl);
+const getDocumentUrls = (documentUrls: string | null) => splitStoredUrls(documentUrls);
+const getAttachmentName = (url: string) => {
+  const path = url.split('?')[0];
+  const fileName = path.split('/').pop();
+  return fileName ? decodeURIComponent(fileName) : 'Attachment';
+};
+
+interface PhotoInfoForm {
+  componentId: string;
+  purpose: string;
+  dateCaptured: string;
+  location: string;
+}
+
+const getPhotoFileName = (url: string) => getAttachmentName(url);
+
+const getComponentIdFromPhotoName = (url: string) => {
+  const fileName = getPhotoFileName(url);
+  return fileName.replace(/\.[^/.]+$/, '').replace(/^\d+_/, '') || 'Project photo';
+};
+
+const getUploadedDateFromPhotoName = (url: string, fallbackDate: string) => {
+  const fileName = getPhotoFileName(url);
+  const timestamp = fileName.match(/^(\d{13})_/)?.[1];
+  const parsedDate = timestamp ? new Date(Number(timestamp)) : new Date(fallbackDate);
+  return Number.isNaN(parsedDate.getTime()) ? '' : parsedDate.toISOString().slice(0, 10);
+};
+
+const getUserDisplayName = (user: any) =>
+  user?.user_metadata?.full_name ||
+  user?.user_metadata?.display_name ||
+  user?.user_metadata?.name ||
+  user?.email ||
+  null;
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -62,15 +115,22 @@ const Dashboard = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
-  const [showImageViewer, setShowImageViewer] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'cards' | 'reports'>('table');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showUserCredentialsModal, setShowUserCredentialsModal] = useState(false);
   const [showMapLockModal, setShowMapLockModal] = useState(false);
   const [pendingReportCount, setPendingReportCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [auditLogsByProject, setAuditLogsByProject] = useState<Record<string, ProjectAuditLog[]>>({});
+  const [photoEditorProject, setPhotoEditorProject] = useState<Project | null>(null);
+  const [photoEditorUrl, setPhotoEditorUrl] = useState<string | null>(null);
+  const [photoInfoForm, setPhotoInfoForm] = useState<PhotoInfoForm>({
+    componentId: "",
+    purpose: "attachment",
+    dateCaptured: "",
+    location: "",
+  });
+  const [isSavingPhotoInfo, setIsSavingPhotoInfo] = useState(false);
 
   const filteredProjects = projects.filter(project => {
     if (!searchQuery) return true;
@@ -118,6 +178,35 @@ const Dashboard = () => {
       setPendingReportCount(count || 0);
     } catch (error) {
       console.error('Error loading pending report count:', error);
+    }
+  };
+
+  const loadProjectAuditLogs = async (projectId: string) => {
+    if (auditLogsByProject[projectId]) return;
+
+    const { data, error } = await (supabase as any)
+      .from('project_audit_logs')
+      .select('id, action, changed_by_email, changed_by_name, regular_username, changed_at, changes')
+      .eq('project_id', projectId)
+      .order('changed_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading project audit logs:', error);
+      return;
+    }
+
+    setAuditLogsByProject((current) => ({
+      ...current,
+      [projectId]: data || [],
+    }));
+  };
+
+  const handleExpandedRowClick = (projectId: string) => {
+    const nextExpandedRow = expandedRow === projectId ? null : projectId;
+    setExpandedRow(nextExpandedRow);
+
+    if (nextExpandedRow) {
+      void loadProjectAuditLogs(projectId);
     }
   };
 
@@ -204,10 +293,105 @@ const Dashboard = () => {
     setShowDeleteDialog(true);
   };
 
-  const handleImageClick = (urls: string[], index: number) => {
-    setImageUrls(urls);
-    setSelectedImageIndex(index);
-    setShowImageViewer(true);
+  const handlePhotoInfoClick = async (project: Project, url: string) => {
+    const defaultForm = {
+      componentId: getComponentIdFromPhotoName(url),
+      purpose: "attachment",
+      dateCaptured: getUploadedDateFromPhotoName(url, project.created_at),
+      location: `${project.latitude.toFixed(7)}, ${project.longitude.toFixed(7)}`,
+    };
+
+    setPhotoEditorProject(project);
+    setPhotoEditorUrl(url);
+    setPhotoInfoForm(defaultForm);
+
+    const { data, error } = await (supabase as any)
+      .from('project_photo_metadata')
+      .select('component_id, purpose, date_captured, location')
+      .eq('project_id', project.id)
+      .eq('photo_url', url)
+      .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error loading photo metadata:', error);
+      toast({
+        title: "Photo metadata unavailable",
+        description: "Using default values until the metadata table is available.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (data) {
+      setPhotoInfoForm({
+        componentId: data.component_id || defaultForm.componentId,
+        purpose: data.purpose || defaultForm.purpose,
+        dateCaptured: data.date_captured || defaultForm.dateCaptured,
+        location: data.location || defaultForm.location,
+      });
+    }
+  };
+
+  const handleSavePhotoInfo = async () => {
+    if (!photoEditorProject || !photoEditorUrl) return;
+
+    setIsSavingPhotoInfo(true);
+    try {
+      const { error } = await (supabase as any)
+        .from('project_photo_metadata')
+        .upsert(
+          {
+            project_id: photoEditorProject.id,
+            photo_url: photoEditorUrl,
+            component_id: photoInfoForm.componentId.trim() || null,
+            purpose: photoInfoForm.purpose.trim() || 'attachment',
+            date_captured: photoInfoForm.dateCaptured || null,
+            location: photoInfoForm.location.trim() || null,
+            updated_by: user?.id ?? null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'project_id,photo_url' },
+        );
+
+      if (error) throw error;
+
+      const { error: auditError } = await (supabase as any)
+        .from('project_audit_logs')
+        .insert({
+          project_id: photoEditorProject.id,
+          action: 'photo_metadata_updated',
+          changed_by: user?.id ?? null,
+          changed_by_email: user?.email ?? null,
+          changed_by_name: getUserDisplayName(user),
+          changes: {
+            photo_url: photoEditorUrl,
+            component_id: photoInfoForm.componentId.trim() || null,
+            purpose: photoInfoForm.purpose.trim() || 'attachment',
+            date_captured: photoInfoForm.dateCaptured || null,
+            location: photoInfoForm.location.trim() || null,
+          },
+        });
+
+      if (auditError) {
+        console.error('Error saving photo metadata audit log:', auditError);
+      }
+
+      toast({
+        title: "Photo information saved",
+        description: "This photo metadata will now show in project details.",
+      });
+      setPhotoEditorProject(null);
+      setPhotoEditorUrl(null);
+    } catch (error: any) {
+      console.error('Error saving photo metadata:', error);
+      toast({
+        title: "Could not save photo information",
+        description: error.message || "Apply the photo metadata migration, then try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingPhotoInfo(false);
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -529,12 +713,20 @@ const Dashboard = () => {
                               {format(new Date(project.project_date), 'MMM dd, yyyy')}
                             </CardDescription>
                           </div>
-                          {project.image_url && (
-                            <Badge variant="secondary" className="text-xs ml-2">
-                              <ImageIcon className="w-3 h-3 mr-1" />
-                              {getImageUrls(project.image_url).length}
-                            </Badge>
-                          )}
+                          <div className="ml-2 flex flex-col items-end gap-1">
+                            {getImageUrls(project.image_url).length > 0 && (
+                              <Badge variant="secondary" className="text-xs">
+                                <ImageIcon className="w-3 h-3 mr-1" />
+                                {getImageUrls(project.image_url).length}
+                              </Badge>
+                            )}
+                            {getDocumentUrls(project.document_urls).length > 0 && (
+                              <Badge variant="outline" className="text-xs border-blue-500 text-blue-700">
+                                <FileText className="w-3 h-3 mr-1" />
+                                {getDocumentUrls(project.document_urls).length}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-3">
@@ -605,7 +797,7 @@ const Dashboard = () => {
                             <div className="pt-2 border-t">
                               <div
                                 className="relative h-16 w-16 cursor-pointer overflow-hidden rounded"
-                                onClick={() => handleImageClick(projectImageUrls, 0)}
+                                onClick={() => handlePhotoInfoClick(project, projectImageUrls[0])}
                               >
                                 <img
                                   src={projectImageUrls[0]}
@@ -657,8 +849,11 @@ const Dashboard = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[40px]"></TableHead>
-                        <TableHead className="w-[50px]">
-                          <ImageIcon className="w-4 h-4 mx-auto" />
+                        <TableHead className="w-[80px]">
+                          <div className="flex items-center justify-center gap-1">
+                            <ImageIcon className="w-4 h-4" />
+                            <FileText className="w-4 h-4" />
+                          </div>
                         </TableHead>
                         <TableHead>Project ID</TableHead>
                         <TableHead>Branch</TableHead>
@@ -676,7 +871,7 @@ const Dashboard = () => {
                         <Fragment key={project.id}>
                           <TableRow
                             className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => setExpandedRow(expandedRow === project.id ? null : project.id)}
+                            onClick={() => handleExpandedRowClick(project.id)}
                           >
                             <TableCell>
                               <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
@@ -687,14 +882,24 @@ const Dashboard = () => {
                                 )}
                               </Button>
                             </TableCell>
-                            <TableCell className="text-center">
-                              {project.image_url ? (
-                                <Badge variant="secondary" className="text-xs">
-                                  {getImageUrls(project.image_url).length}
-                                </Badge>
-                              ) : (
-                                <span className="text-muted-foreground text-xs">-</span>
-                              )}
+                            <TableCell>
+                              <div className="flex items-center justify-center gap-1">
+                                {getImageUrls(project.image_url).length > 0 && (
+                                  <Badge variant="secondary" className="text-xs gap-1">
+                                    <ImageIcon className="w-3 h-3" />
+                                    {getImageUrls(project.image_url).length}
+                                  </Badge>
+                                )}
+                                {getDocumentUrls(project.document_urls).length > 0 && (
+                                  <Badge variant="outline" className="text-xs gap-1 border-blue-500 text-blue-700">
+                                    <FileText className="w-3 h-3" />
+                                    {getDocumentUrls(project.document_urls).length}
+                                  </Badge>
+                                )}
+                                {getImageUrls(project.image_url).length === 0 && getDocumentUrls(project.document_urls).length === 0 && (
+                                  <span className="text-muted-foreground text-xs">-</span>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="font-medium">{project.project_id}</TableCell>
                             <TableCell>
@@ -795,6 +1000,26 @@ const Dashboard = () => {
                                       <p className="text-sm">{format(new Date(project.project_date), 'PPP')}</p>
                                     </div>
                                     <div>
+                                      <p className="text-xs font-medium text-muted-foreground">Created in System</p>
+                                      <p className="text-sm">{format(new Date(project.created_at), 'PPP p')}</p>
+                                      <p className="text-[10px] text-muted-foreground">
+                                        {project.created_user_type === 'regular'
+                                          ? `By regular user ${project.created_regular_username || 'Unknown'}`
+                                          : project.created_by_email
+                                            ? `By admin ${project.created_by_email}`
+                                            : 'Creator not recorded'}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-medium text-muted-foreground">Last Edited</p>
+                                      <p className="text-sm">
+                                        {project.updated_at ? format(new Date(project.updated_at), 'PPP p') : 'Not edited yet'}
+                                      </p>
+                                      <p className="text-[10px] text-muted-foreground">
+                                        {project.updated_by_email ? `By ${project.updated_by_email}` : 'Editor not recorded'}
+                                      </p>
+                                    </div>
+                                    <div>
                                       <p className="text-xs font-medium text-muted-foreground">Location</p>
                                       <p className="text-xs font-mono">
                                         {project.latitude.toFixed(6)}, {project.longitude.toFixed(6)}
@@ -843,7 +1068,7 @@ const Dashboard = () => {
                                               <div
                                                 key={index}
                                                 className="relative group cursor-pointer"
-                                                onClick={() => handleImageClick(projectImageUrls, index)}
+                                                onClick={() => handlePhotoInfoClick(project, url)}
                                               >
                                                 <img
                                                   src={url}
@@ -857,7 +1082,7 @@ const Dashboard = () => {
                                                 </div>
                                                 <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
                                                   <div className="bg-white/90 px-2 py-1 rounded text-xs font-medium">
-                                                    Click to enlarge
+                                                    Edit photo info
                                                   </div>
                                                 </div>
                                               </div>
@@ -866,6 +1091,70 @@ const Dashboard = () => {
                                         </div>
                                       );
                                     })()}
+                                    {project.document_urls && (() => {
+                                      const projectDocumentUrls = getDocumentUrls(project.document_urls);
+                                      return projectDocumentUrls.length > 0 && (
+                                        <div className="col-span-2 md:col-span-3">
+                                          <p className="text-xs font-medium text-muted-foreground mb-2">
+                                            Project Files ({projectDocumentUrls.length})
+                                          </p>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            {projectDocumentUrls.map((url, index) => (
+                                              <a
+                                                key={url}
+                                                href={url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 rounded-lg border bg-background p-2 text-sm hover:bg-muted"
+                                                onClick={(event) => event.stopPropagation()}
+                                              >
+                                                <FileText className="h-4 w-4 flex-shrink-0 text-blue-600" />
+                                                <span className="min-w-0 flex-1 truncate">
+                                                  {getAttachmentName(url)}
+                                                </span>
+                                                <span className="text-xs text-muted-foreground">#{index + 1}</span>
+                                              </a>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      );
+                                    })()}
+                                    <div className="col-span-2 md:col-span-3 rounded-lg border bg-background p-3">
+                                      <p className="text-xs font-medium text-muted-foreground mb-2">Audit Trail</p>
+                                      {auditLogsByProject[project.id]?.length > 0 ? (
+                                        <div className="space-y-2">
+                                          {auditLogsByProject[project.id].map((log) => {
+                                            const changedFields = log.changes ? Object.keys(log.changes) : [];
+                                            return (
+                                              <div key={log.id} className="rounded-md bg-muted/50 p-2">
+                                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                                                  <p className="text-sm font-medium capitalize">{log.action}</p>
+                                                  <p className="text-xs text-muted-foreground">
+                                                    {format(new Date(log.changed_at), 'PPP p')}
+                                                  </p>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">
+                                                  By {log.regular_username
+                                                    ? `regular user ${log.regular_username}`
+                                                    : log.changed_by_name || log.changed_by_email || 'Unknown admin'}
+                                                </p>
+                                                {changedFields.length > 0 && (
+                                                  <p className="mt-1 text-xs">
+                                                    Fields: {changedFields.join(', ')}
+                                                  </p>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      ) : (
+                                        <p className="text-xs text-muted-foreground">
+                                          {auditLogsByProject[project.id]
+                                            ? 'No audit records yet.'
+                                            : 'Loading audit records...'}
+                                        </p>
+                                      )}
+                                    </div>
                                     <div className="col-span-2 md:col-span-3">
                                       <p className="text-xs text-muted-foreground">
                                         Submitted: {format(new Date(project.created_at), 'PPP \'at\' p')}
@@ -924,13 +1213,107 @@ const Dashboard = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Image Viewer Modal */}
-      <ImageViewerModal
-        isOpen={showImageViewer}
-        onClose={() => setShowImageViewer(false)}
-        images={imageUrls}
-        initialIndex={selectedImageIndex}
-      />
+      <Dialog
+        open={!!photoEditorProject && !!photoEditorUrl}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPhotoEditorProject(null);
+            setPhotoEditorUrl(null);
+          }
+        }}
+      >
+        <DialogContent className="w-[95vw] max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Photo Information</DialogTitle>
+            <DialogDescription>
+              Configure the photo metadata shown to users in the project gallery.
+            </DialogDescription>
+          </DialogHeader>
+
+          {photoEditorProject && photoEditorUrl && (
+            <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-5">
+              <div className="space-y-3">
+                <div className="overflow-hidden rounded-lg border bg-muted">
+                  <img
+                    src={photoEditorUrl}
+                    alt={photoInfoForm.componentId || "Project photo"}
+                    className="max-h-[60vh] w-full object-contain"
+                  />
+                </div>
+                <p className="truncate text-xs text-muted-foreground">{getPhotoFileName(photoEditorUrl)}</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="admin-photo-component-id">Component ID</Label>
+                  <Input
+                    id="admin-photo-component-id"
+                    value={photoInfoForm.componentId}
+                    onChange={(event) => setPhotoInfoForm((current) => ({ ...current, componentId: event.target.value }))}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="admin-photo-purpose">Purpose</Label>
+                  <Input
+                    id="admin-photo-purpose"
+                    value={photoInfoForm.purpose}
+                    onChange={(event) => setPhotoInfoForm((current) => ({ ...current, purpose: event.target.value }))}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="admin-photo-date-captured">Date Captured</Label>
+                  <Input
+                    id="admin-photo-date-captured"
+                    type="date"
+                    value={photoInfoForm.dateCaptured}
+                    onChange={(event) => setPhotoInfoForm((current) => ({ ...current, dateCaptured: event.target.value }))}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="admin-photo-location">Location</Label>
+                  <Input
+                    id="admin-photo-location"
+                    value={photoInfoForm.location}
+                    onChange={(event) => setPhotoInfoForm((current) => ({ ...current, location: event.target.value }))}
+                  />
+                  <a
+                    href={`https://www.google.com/maps?q=${photoEditorProject.latitude},${photoEditorProject.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-[#FF5722] hover:underline"
+                  >
+                    View on Google Maps →
+                  </a>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                  <Button
+                    className="bg-[#FF5722] hover:bg-[#E64A19]"
+                    onClick={handleSavePhotoInfo}
+                    disabled={isSavingPhotoInfo}
+                  >
+                    {isSavingPhotoInfo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Save Photo Info
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setPhotoEditorProject(null);
+                      setPhotoEditorUrl(null);
+                    }}
+                    disabled={isSavingPhotoInfo}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Manage User Credentials Modal */}
       <ManageUserCredentials
@@ -948,4 +1331,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

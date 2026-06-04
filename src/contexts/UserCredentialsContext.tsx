@@ -1,30 +1,47 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+export interface RegularUserPermissions {
+  canSearchMap: boolean;
+  canPinProject: boolean;
+  canEnterProjectByLocation: boolean;
+  canInputProjectDetails: boolean;
+}
+
 interface UserCredentialsContextType {
   isUserAuthenticated: boolean;
   username: string | null;
+  permissions: RegularUserPermissions;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
 const UserCredentialsContext = createContext<UserCredentialsContextType | undefined>(undefined);
 
+const defaultPermissions: RegularUserPermissions = {
+  canSearchMap: true,
+  canPinProject: true,
+  canEnterProjectByLocation: true,
+  canInputProjectDetails: true,
+};
+
 export const UserCredentialsProvider = ({ children }: { children: ReactNode }) => {
   const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [permissions, setPermissions] = useState<RegularUserPermissions>(defaultPermissions);
 
   // Check if user is already logged in (from localStorage)
   useEffect(() => {
     const storedAuth = localStorage.getItem('regularUserAuth');
     if (storedAuth) {
       try {
-        const { username: storedUsername, timestamp } = JSON.parse(storedAuth);
+        const { username: storedUsername, timestamp, permissions: storedPermissions } = JSON.parse(storedAuth);
         // Check if the session is less than 24 hours old
         const now = Date.now();
         const twentyFourHours = 24 * 60 * 60 * 1000;
         if (now - timestamp < twentyFourHours) {
           setIsUserAuthenticated(true);
           setUsername(storedUsername);
+          setPermissions({ ...defaultPermissions, ...(storedPermissions || {}) });
         } else {
           // Session expired
           localStorage.removeItem('regularUserAuth');
@@ -42,7 +59,7 @@ export const UserCredentialsProvider = ({ children }: { children: ReactNode }) =
       const { supabase } = await import('@/integrations/supabase/client');
       const normalizedUsername = inputUsername.trim();
       
-      const { data, error } = await (supabase as any).rpc('validate_user_credentials', {
+      const { data, error } = await (supabase as any).rpc('validate_user_credentials_with_access', {
         input_username: normalizedUsername,
         input_password: inputPassword,
       });
@@ -52,13 +69,16 @@ export const UserCredentialsProvider = ({ children }: { children: ReactNode }) =
         return false;
       }
 
-      if (data === true) {
+      if (data?.valid === true) {
+        const nextPermissions = { ...defaultPermissions, ...(data.permissions || {}) };
         setIsUserAuthenticated(true);
-        setUsername(normalizedUsername);
+        setUsername(data.username || normalizedUsername);
+        setPermissions(nextPermissions);
         
         // Store in localStorage with timestamp
         localStorage.setItem('regularUserAuth', JSON.stringify({
-          username: normalizedUsername,
+          username: data.username || normalizedUsername,
+          permissions: nextPermissions,
           timestamp: Date.now()
         }));
         
@@ -75,11 +95,12 @@ export const UserCredentialsProvider = ({ children }: { children: ReactNode }) =
   const logout = () => {
     setIsUserAuthenticated(false);
     setUsername(null);
+    setPermissions(defaultPermissions);
     localStorage.removeItem('regularUserAuth');
   };
 
   return (
-    <UserCredentialsContext.Provider value={{ isUserAuthenticated, username, login, logout }}>
+    <UserCredentialsContext.Provider value={{ isUserAuthenticated, username, permissions, login, logout }}>
       {children}
     </UserCredentialsContext.Provider>
   );

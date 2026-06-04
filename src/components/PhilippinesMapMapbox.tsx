@@ -82,7 +82,7 @@ interface PhilippinesMapMapboxProps {
 }
 
 const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, onProjectSelect }: PhilippinesMapMapboxProps) => {
-  const { isUserAuthenticated } = useUserCredentials();
+  const { isUserAuthenticated, permissions } = useUserCredentials();
   const { token: mapboxToken } = useMapboxToken();
   const [searchParams, setSearchParams] = useSearchParams();
   const mapRef = useRef<any>(null);
@@ -173,6 +173,15 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
 
   const isSecureContext = () => window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
+  const showAccessDenied = (action: string) => {
+    toast({
+      title: "Access not allowed",
+      description: `Your user credentials are not allowed to ${action}. Please contact administrator for this access.`,
+      variant: "destructive",
+      duration: 3000,
+    });
+  };
+
   // More lenient bounds check - accounts for GPS inaccuracy and border areas
   const isInPhilippinesBounds = (lat: number, lng: number) => {
     // Philippines bounds with buffer for GPS inaccuracy
@@ -228,6 +237,10 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
     setTempMarker({ longitude, latitude });
     setTempMarkerSource('gps');
     setSelectedLocation({ lat: latitude, lng: longitude });
+    if (!permissions.canInputProjectDetails) {
+      showAccessDenied("input project details");
+      return;
+    }
     setShowProjectForm(true);
   };
 
@@ -241,6 +254,11 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
         variant: "destructive",
         duration: 3000,
       });
+      return;
+    }
+
+    if (!permissions.canEnterProjectByLocation) {
+      showAccessDenied("enter projects using your current location");
       return;
     }
 
@@ -427,6 +445,11 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
       return;
     }
 
+    if (!permissions.canPinProject) {
+      showAccessDenied("pin projects on the map");
+      return;
+    }
+
     setIsPinMode(true);
     toast({
       title: "Pin Mode Active",
@@ -437,6 +460,21 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
 
   // Handle Search Place
   const handleSearchPlace = () => {
+    if (!isUserAuthenticated) {
+      toast({
+        title: "🔒 Authentication Required",
+        description: "Please login with your user credentials to search on the map.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    if (!permissions.canSearchMap) {
+      showAccessDenied("search on the map");
+      return;
+    }
+
     setShowSearchModal(true);
   };
 
@@ -456,6 +494,11 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
 
   // Handle location confirmation
   const handleConfirmLocation = () => {
+    if (!permissions.canInputProjectDetails) {
+      showAccessDenied("input project details");
+      return;
+    }
+
     setShowLocationConfirm(false);
     setShowProjectForm(true);
   };
@@ -495,6 +538,11 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
     event.originalEvent.stopPropagation();
 
     if (tempMarkerSource !== 'search' || !selectedLocation) {
+      return;
+    }
+
+    if (!permissions.canInputProjectDetails) {
+      showAccessDenied("input project details");
       return;
     }
 
@@ -663,6 +711,9 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
         onEnterProject={handleEnterProject}
         onPinOnMap={handlePinOnMap}
         onSearchPlace={handleSearchPlace}
+        canEnterProject={!isUserAuthenticated || permissions.canEnterProjectByLocation}
+        canPinProject={!isUserAuthenticated || permissions.canPinProject}
+        canSearchMap={!isUserAuthenticated || permissions.canSearchMap}
       />
 
       {/* Map Style Selector */}
@@ -718,4 +769,3 @@ const PhilippinesMapMapbox = ({ projects, onProjectUpdate, selectedProjectId, on
 };
 
 export default PhilippinesMapMapbox;
-
